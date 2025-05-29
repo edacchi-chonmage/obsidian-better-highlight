@@ -150,14 +150,92 @@ export default class BetterHighlightPlugin extends Plugin {
 	}
 
 	private removeHighlightFromSelection(editor: Editor, selection: string) {
-		// カスタムハイライト構文を削除: ===(colorname)content=== -> content
-		let cleaned = selection.replace(/===\([^)]+\)([^=]+)===/g, '$1');
+		// 選択範囲の開始・終了位置を取得
+		const selectionFrom = editor.getCursor('from');
+		const selectionTo = editor.getCursor('to');
 		
-		// 通常のハイライト構文を削除: ==content== -> content
-		cleaned = cleaned.replace(/==([^=]+)==/g, '$1');
-
-		if (cleaned !== selection) {
-			editor.replaceSelection(cleaned);
+		console.log(`Selection from line ${selectionFrom.line} ch ${selectionFrom.ch} to line ${selectionTo.line} ch ${selectionTo.ch}`);
+		
+		let foundHighlight = false;
+		let processedLines = new Set<number>();
+		
+		// 選択範囲に関わる全ての行を処理
+		for (let lineNum = selectionFrom.line; lineNum <= selectionTo.line; lineNum++) {
+			if (processedLines.has(lineNum)) continue;
+			
+			const line = editor.getLine(lineNum);
+			console.log(`Processing line ${lineNum}: "${line}"`);
+			
+			// 選択範囲がこの行のどの部分に該当するかを計算
+			const lineSelectionStart = lineNum === selectionFrom.line ? selectionFrom.ch : 0;
+			const lineSelectionEnd = lineNum === selectionTo.line ? selectionTo.ch : line.length;
+			
+			console.log(`Line ${lineNum} selection range: ${lineSelectionStart}-${lineSelectionEnd}`);
+			
+			// カスタムハイライト構文を検索
+			const customHighlightRegex = /===\([^)]+\)([^=]+)===/g;
+			const normalHighlightRegex = /==([^=]+)==/g;
+			
+			let match;
+			let newLine = line;
+			let lineChanged = false;
+			
+			// カスタムハイライトをチェック
+			customHighlightRegex.lastIndex = 0;
+			while ((match = customHighlightRegex.exec(line)) !== null) {
+				const matchStart = match.index;
+				const matchEnd = match.index + match[0].length;
+				
+				console.log(`Found custom highlight: "${match[0]}" at ${matchStart}-${matchEnd}`);
+				
+				// 選択範囲とハイライトが重複するかチェック
+				const overlaps = !(lineSelectionEnd <= matchStart || lineSelectionStart >= matchEnd);
+				
+				if (overlaps) {
+					console.log(`Selection overlaps with custom highlight, removing...`);
+					const content = match[1]; // 抽出されたコンテンツ
+					const beforeMatch = newLine.substring(0, matchStart);
+					const afterMatch = newLine.substring(matchEnd);
+					newLine = beforeMatch + content + afterMatch;
+					lineChanged = true;
+					foundHighlight = true;
+					break; // 1つのハイライトを削除したら次の行へ
+				}
+			}
+			
+			// カスタムハイライトが見つからなかった場合、通常のハイライトをチェック
+			if (!lineChanged) {
+				normalHighlightRegex.lastIndex = 0;
+				while ((match = normalHighlightRegex.exec(line)) !== null) {
+					const matchStart = match.index;
+					const matchEnd = match.index + match[0].length;
+					
+					console.log(`Found normal highlight: "${match[0]}" at ${matchStart}-${matchEnd}`);
+					
+					// 選択範囲とハイライトが重複するかチェック
+					const overlaps = !(lineSelectionEnd <= matchStart || lineSelectionStart >= matchEnd);
+					
+					if (overlaps) {
+						console.log(`Selection overlaps with normal highlight, removing...`);
+						const content = match[1]; // 抽出されたコンテンツ
+						const beforeMatch = newLine.substring(0, matchStart);
+						const afterMatch = newLine.substring(matchEnd);
+						newLine = beforeMatch + content + afterMatch;
+						lineChanged = true;
+						foundHighlight = true;
+						break; // 1つのハイライトを削除したら次の行へ
+					}
+				}
+			}
+			
+			// 行が変更された場合は更新
+			if (lineChanged) {
+				editor.setLine(lineNum, newLine);
+				processedLines.add(lineNum);
+			}
+		}
+		
+		if (foundHighlight) {
 			new Notice('ハイライトを削除しました');
 		} else {
 			new Notice('選択範囲にハイライトが見つかりませんでした');
