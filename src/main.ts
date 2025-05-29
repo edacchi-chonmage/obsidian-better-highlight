@@ -10,7 +10,7 @@ import { RangeSetBuilder } from '@codemirror/state';
  * 拡張Markdownハイライト機能
  * 
  * 機能:
- * - カスタム構文: ===(colorname)content===
+ * - カスタム構文: ==(colorname)content==
  * - ユーザー定義カラー
  * - 多言語対応
  */
@@ -120,8 +120,8 @@ export default class BetterHighlightPlugin extends Plugin {
 
 		let replacement: string;
 		if (color) {
-			// カスタムカラーハイライト: ===(colorname)content===
-			replacement = `===(${color.name})${selection}===`;
+			// カスタムカラーハイライト: ==(colorname)content==
+			replacement = `==(${color.name})${selection}==`;
 		} else {
 			// デフォルトハイライト: ==content==
 			replacement = `==${selection}==`;
@@ -168,7 +168,7 @@ export default class BetterHighlightPlugin extends Plugin {
 			console.log(`Line ${lineNum} selection range: ${lineSelectionStart}-${lineSelectionEnd}`);
 			
 			// カスタムハイライト構文を検索
-			const customHighlightRegex = /===\([^)]+\)([^=]+)===/g;
+			const customHighlightRegex = /==\([^)]+\)([^=]+)==/g;
 			const normalHighlightRegex = /==([^=]+)==/g;
 			
 			let match;
@@ -254,7 +254,7 @@ export default class BetterHighlightPlugin extends Plugin {
 		console.log(`Line content: "${line}"`);
 
 		// カーソル位置周辺のハイライト構文を検索
-		const customHighlightRegex = /===\([^)]+\)([^=]+)===/g;
+		const customHighlightRegex = /==\([^)]+\)([^=]+)==/g;
 		const normalHighlightRegex = /==([^=]+)==/g;
 
 		let match;
@@ -483,7 +483,7 @@ span.better-highlight-${color.id}.better-highlight-processed,
 		});
 		
 		// 元の構文も念のためチェック（万が一直接含まれている場合）
-		const originalRegex = /===\(([^)]+)\)([^=]+)===/g;
+		const originalRegex = /==\(([^)]+)\)([^=]+)==/g;
 		html = html.replace(originalRegex, (match, colorName, content) => {
 			console.log(`🎯 Found original syntax in reading view: ${match}`);
 			console.log(`Color: ${colorName}, Content: ${content}`);
@@ -559,7 +559,7 @@ span.better-highlight-${color.id}.better-highlight-processed,
 					console.log(`Cursor: ${cursorPos}, Selection: ${selectionFrom}-${selectionTo}, Has selection: ${hasSelection}, Dragging: ${isDragging}`);
 					
 					// カスタムハイライト構文を検索
-					const regex = /===\(([^)]+)\)([^=]+)===/g;
+					const regex = /==\(([^)]+)\)([^=]+)==/g;
 					let match;
 					
 					while ((match = regex.exec(text)) !== null) {
@@ -599,11 +599,11 @@ span.better-highlight-${color.id}.better-highlight-processed,
 								
 								// 開始マークアップの位置を計算
 								const openMarkupStart = from;
-								const openMarkupEnd = from + `===(${colorName})`.length;
+								const openMarkupEnd = from + `==(${colorName})`.length;
 								
 								// コンテンツの位置を計算
 								const contentStart = openMarkupEnd;
-								const contentEnd = to - 3; // "===" の長さ分
+								const contentEnd = to - 2; // "==" の長さ分
 								
 								// 終了マークアップの位置を計算
 								const closeMarkupStart = contentEnd;

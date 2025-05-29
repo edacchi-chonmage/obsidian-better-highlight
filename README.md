@@ -4,7 +4,7 @@ Enhanced Markdown highlighting for Obsidian with custom colors.
 
 ## Features
 
-- **Custom Color Highlights**: Use `===(colorname)text===` syntax for custom colored highlights
+- **Custom Color Highlights**: Use `==(colorname)text==` syntax for custom colored highlights
 - **Standard Highlights**: Regular `==text==` highlighting still works
 - **Configurable Colors**: Add, remove, and customize highlight colors
 - **Hotkey Support**: Set keyboard shortcuts for each color
@@ -30,14 +30,14 @@ The plugin automatically detects your Obsidian language and supports:
 
 ### Basic Highlighting
 - Standard highlight: `==text==`
-- Custom color highlight: `===(colorname)text===`
+- Custom color highlight: `==(colorname)text==`
 
 ### Examples
 ```markdown
 ==This is a standard yellow highlight==
-===(blue)This is a blue highlight===
-===(red)This is a red highlight===
-===(green)This is a green highlight===
+==(blue)This is a blue highlight==
+==(red)This is a red highlight==
+==(green)This is a green highlight==
 ```
 
 ### Setting Up Hotkeys
@@ -63,7 +63,7 @@ The plugin automatically detects your Obsidian language and supports:
 Access plugin settings through Settings → Better Highlight Settings:
 
 - **Add/Remove Colors**: Customize your highlight color palette
-- **Color Names**: Set the names used in `===(colorname)text===` syntax
+- **Color Names**: Set the names used in `==(colorname)text==` syntax
 - **Display Names**: Set the names shown in menus and commands
 - **Enable/Disable**: Toggle colors on/off without deleting them
 
