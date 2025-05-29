@@ -157,13 +157,15 @@ export default class BetterHighlightPlugin extends Plugin {
 		console.log(`Selection from line ${selectionFrom.line} ch ${selectionFrom.ch} to line ${selectionTo.line} ch ${selectionTo.ch}`);
 		
 		let foundHighlight = false;
-		let processedLines = new Set<number>();
+		let removedCount = 0;
+		
+		// 全体のテキストを取得
+		const fullText = editor.getValue();
+		const lines = fullText.split('\n');
 		
 		// 選択範囲に関わる全ての行を処理
 		for (let lineNum = selectionFrom.line; lineNum <= selectionTo.line; lineNum++) {
-			if (processedLines.has(lineNum)) continue;
-			
-			const line = editor.getLine(lineNum);
+			const line = lines[lineNum];
 			console.log(`Processing line ${lineNum}: "${line}"`);
 			
 			// 選択範囲がこの行のどの部分に該当するかを計算
@@ -199,6 +201,7 @@ export default class BetterHighlightPlugin extends Plugin {
 					newLine = beforeMatch + content + afterMatch;
 					lineChanged = true;
 					foundHighlight = true;
+					removedCount++;
 					break; // 1つのハイライトを削除したら次の行へ
 				}
 			}
@@ -223,20 +226,27 @@ export default class BetterHighlightPlugin extends Plugin {
 						newLine = beforeMatch + content + afterMatch;
 						lineChanged = true;
 						foundHighlight = true;
+						removedCount++;
 						break; // 1つのハイライトを削除したら次の行へ
 					}
 				}
 			}
 			
-			// 行が変更された場合は更新
+			// 行が変更された場合は配列を更新
 			if (lineChanged) {
-				editor.setLine(lineNum, newLine);
-				processedLines.add(lineNum);
+				lines[lineNum] = newLine;
 			}
 		}
 		
+		// 変更がある場合は全体を一度に置換（1つのundo単位）
 		if (foundHighlight) {
-			new Notice('ハイライトを削除しました');
+			const newText = lines.join('\n');
+			editor.setValue(newText);
+			
+			// 選択範囲を復元
+			editor.setSelection(selectionFrom, selectionTo);
+			
+			new Notice(`ハイライトを削除しました (${removedCount}個)`);
 		} else {
 			new Notice('選択範囲にハイライトが見つかりませんでした');
 		}
