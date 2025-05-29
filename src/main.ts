@@ -1,4 +1,4 @@
-import { Plugin, PluginSettingTab, Setting, App, Editor, MarkdownView, Modifier, MarkdownPostProcessor } from 'obsidian';
+import { Plugin, PluginSettingTab, Setting, App, Editor, MarkdownView, Modifier, Notice } from 'obsidian';
 import { BetterHighlightSettings, HighlightColor, DEFAULT_SETTINGS } from './types';
 
 /**
@@ -8,14 +8,15 @@ import { BetterHighlightSettings, HighlightColor, DEFAULT_SETTINGS } from './typ
  * 機能:
  * - カスタム構文: ===(colorname)content===
  * - ユーザー定義カラー
- * - ホットキー対応
  */
 export default class BetterHighlightPlugin extends Plugin {
 	settings!: BetterHighlightSettings;
-	private postProcessor?: MarkdownPostProcessor;
 
 	async onload() {
 		console.log('Better Highlight Plugin loading...');
+		
+		// プラグイン読み込み確認用のアラート
+		new Notice('Better Highlight Plugin が読み込まれました！');
 		
 		// 設定の読み込み
 		await this.loadSettings();
@@ -26,7 +27,7 @@ export default class BetterHighlightPlugin extends Plugin {
 		// Markdown post processorの登録
 		this.setupMarkdownPostProcessor();
 
-		// コマンドとホットキーの登録
+		// コマンドの登録
 		this.registerCommands();
 
 		// 設定タブの追加
@@ -37,7 +38,7 @@ export default class BetterHighlightPlugin extends Plugin {
 
 	onunload() {
 		console.log('Better Highlight Plugin unloading...');
-		// スタイルとprocessorの削除
+		// スタイルの削除
 		const existingStyle = document.getElementById('better-highlight-styles');
 		if (existingStyle) {
 			existingStyle.remove();
@@ -51,16 +52,18 @@ export default class BetterHighlightPlugin extends Plugin {
 	async saveSettings() {
 		await this.saveData(this.settings);
 		this.addStyles(); // 設定変更時にスタイルを更新
-		this.registerCommands(); // コマンドも再登録
 	}
 
 	private registerCommands() {
-		// 既存のコマンドをクリア
-		// @ts-ignore - internalAPIの使用
-		this.app.commands.removeCommand(`${this.manifest.id}:create-default-highlight`);
-		this.settings.colors.forEach((color) => {
-			// @ts-ignore - internalAPIの使用
-			this.app.commands.removeCommand(`${this.manifest.id}:highlight-${color.id}`);
+		// テスト用コマンド（デバッグ用）
+		this.addCommand({
+			id: 'test-plugin',
+			name: 'プラグインテスト（動作確認用）',
+			callback: () => {
+				new Notice('Better Highlight Plugin は正常に動作しています！');
+				console.log('Plugin test command executed');
+				console.log('Current settings:', this.settings);
+			}
 		});
 
 		// 基本的なハイライトコマンド
@@ -72,14 +75,21 @@ export default class BetterHighlightPlugin extends Plugin {
 			}
 		});
 
-		// 各色のハイライトコマンドとホットキー
+		// ハイライト削除コマンド
+		this.addCommand({
+			id: 'remove-highlight',
+			name: 'ハイライトを削除',
+			editorCallback: (editor) => {
+				this.removeHighlight(editor);
+			}
+		});
+
+		// 各色のハイライトコマンド
 		this.settings.colors.forEach((color) => {
 			if (color.enabled) {
-				const hotkeys = color.hotkey ? [this.parseHotkey(color.hotkey)] : [];
 				this.addCommand({
 					id: `highlight-${color.id}`,
 					name: `${color.displayName}ハイライトを作成`,
-					hotkeys: hotkeys,
 					editorCallback: (editor) => {
 						this.createHighlight(editor, color);
 					}
@@ -106,6 +116,115 @@ export default class BetterHighlightPlugin extends Plugin {
 		editor.replaceSelection(replacement);
 	}
 
+	private removeHighlight(editor: Editor) {
+		const selection = editor.getSelection();
+		
+		if (selection) {
+			// 選択されたテキストがある場合は従来の処理
+			this.removeHighlightFromSelection(editor, selection);
+		} else {
+			// 選択されたテキストがない場合はカーソル位置のハイライトを削除
+			this.removeHighlightAtCursor(editor);
+		}
+	}
+
+	private removeHighlightFromSelection(editor: Editor, selection: string) {
+		// カスタムハイライト構文を削除: ===(colorname)content=== -> content
+		let cleaned = selection.replace(/===\([^)]+\)([^=]+)===/g, '$1');
+		
+		// 通常のハイライト構文を削除: ==content== -> content
+		cleaned = cleaned.replace(/==([^=]+)==/g, '$1');
+
+		if (cleaned !== selection) {
+			editor.replaceSelection(cleaned);
+			new Notice('ハイライトを削除しました');
+		} else {
+			new Notice('選択範囲にハイライトが見つかりませんでした');
+		}
+	}
+
+	private removeHighlightAtCursor(editor: Editor) {
+		const cursor = editor.getCursor();
+		const line = editor.getLine(cursor.line);
+		const cursorPos = cursor.ch;
+
+		console.log(`Cursor at line ${cursor.line}, position ${cursorPos}`);
+		console.log(`Line content: "${line}"`);
+
+		// カーソル位置周辺のハイライト構文を検索
+		const customHighlightRegex = /===\([^)]+\)([^=]+)===/g;
+		const normalHighlightRegex = /==([^=]+)==/g;
+
+		let match;
+		let foundHighlight = false;
+
+		// カスタムハイライトをチェック
+		customHighlightRegex.lastIndex = 0;
+		while ((match = customHighlightRegex.exec(line)) !== null) {
+			const matchStart = match.index;
+			const matchEnd = match.index + match[0].length;
+			
+			console.log(`Found custom highlight: "${match[0]}" at ${matchStart}-${matchEnd}`);
+			
+			if (cursorPos >= matchStart && cursorPos <= matchEnd) {
+				console.log('Cursor is inside custom highlight, removing...');
+				const beforeMatch = line.substring(0, matchStart);
+				const afterMatch = line.substring(matchEnd);
+				const content = match[1]; // 抽出されたコンテンツ
+				
+				const newLine = beforeMatch + content + afterMatch;
+				
+				// 行全体を置換
+				editor.setLine(cursor.line, newLine);
+				
+				// カーソル位置を調整（削除されたマークアップ分だけ左に移動）
+				const removedChars = match[0].length - content.length;
+				const newCursorPos = Math.max(0, cursorPos - (cursorPos > matchStart + content.length ? removedChars : 0));
+				editor.setCursor(cursor.line, newCursorPos);
+				
+				new Notice('カスタムハイライトを削除しました');
+				foundHighlight = true;
+				break;
+			}
+		}
+
+		// カスタムハイライトが見つからなかった場合、通常のハイライトをチェック
+		if (!foundHighlight) {
+			normalHighlightRegex.lastIndex = 0;
+			while ((match = normalHighlightRegex.exec(line)) !== null) {
+				const matchStart = match.index;
+				const matchEnd = match.index + match[0].length;
+				
+				console.log(`Found normal highlight: "${match[0]}" at ${matchStart}-${matchEnd}`);
+				
+				if (cursorPos >= matchStart && cursorPos <= matchEnd) {
+					console.log('Cursor is inside normal highlight, removing...');
+					const beforeMatch = line.substring(0, matchStart);
+					const afterMatch = line.substring(matchEnd);
+					const content = match[1]; // 抽出されたコンテンツ
+					
+					const newLine = beforeMatch + content + afterMatch;
+					
+					// 行全体を置換
+					editor.setLine(cursor.line, newLine);
+					
+					// カーソル位置を調整
+					const removedChars = match[0].length - content.length;
+					const newCursorPos = Math.max(0, cursorPos - (cursorPos > matchStart + content.length ? removedChars : 0));
+					editor.setCursor(cursor.line, newCursorPos);
+					
+					new Notice('ハイライトを削除しました');
+					foundHighlight = true;
+					break;
+				}
+			}
+		}
+
+		if (!foundHighlight) {
+			new Notice('カーソル位置にハイライトが見つかりませんでした');
+		}
+	}
+
 	private addStyles() {
 		// 既存のスタイルを削除
 		const existingStyle = document.getElementById('better-highlight-styles');
@@ -127,6 +246,11 @@ mark, .cm-highlight {
 }
 
 /* カスタムカラーハイライト */
+.better-highlight-processed {
+	font-style: normal !important;
+	font-weight: normal !important;
+}
+
 `;
 
 		// 各色のCSSルールを生成
@@ -134,10 +258,13 @@ mark, .cm-highlight {
 			if (color.enabled) {
 				css += `
 .better-highlight-${color.id} {
-	background-color: ${color.color};
-	color: ${this.getContrastColor(color.color)};
-	padding: 1px 2px;
-	border-radius: 2px;
+	background-color: ${color.color} !important;
+	color: ${this.getContrastColor(color.color)} !important;
+	padding: 1px 2px !important;
+	border-radius: 2px !important;
+	display: inline !important;
+	font-style: normal !important;
+	font-weight: normal !important;
 }
 `;
 			}
@@ -145,110 +272,109 @@ mark, .cm-highlight {
 
 		style.textContent = css;
 		document.head.appendChild(style);
+		
+		console.log('CSS styles added:', css);
 	}
 
 	private setupMarkdownPostProcessor() {
-		// 既存のpost processorがあれば削除
-		if (this.postProcessor) {
-			// @ts-ignore - internalAPIの使用
-			this.app.metadataCache.trigger('resolve', null);
-		}
-
-		// 新しいpost processorを登録
-		this.postProcessor = this.registerMarkdownPostProcessor((element, context) => {
-			// ===(colorname)content=== を検索して置換
-			this.processCustomHighlights(element);
-		});
-	}
-
-	private processCustomHighlights(element: HTMLElement) {
-		const walker = document.createTreeWalker(
-			element,
-			NodeFilter.SHOW_TEXT,
-			{
-				acceptNode: (node) => {
-					// すでに処理済みの要素は除外
-					if (node.parentElement?.classList.contains('better-highlight-processed')) {
-						return NodeFilter.FILTER_REJECT;
-					}
-					return NodeFilter.FILTER_ACCEPT;
-				}
-			}
-		);
-
-		const textNodes: Text[] = [];
-		let node;
-		while (node = walker.nextNode()) {
-			textNodes.push(node as Text);
-		}
-
-		textNodes.forEach((textNode) => {
-			const text = textNode.textContent || '';
-			const regex = /===\(([^)]+)\)([^=]+)===/g;
-			
-			let hasMatch = false;
-			let match;
-			
-			// まずマッチがあるかチェック
-			while ((match = regex.exec(text)) !== null) {
-				hasMatch = true;
-				break;
-			}
-			
-			if (hasMatch) {
-				const parent = textNode.parentNode;
-				if (!parent) return;
-
-				const fragment = document.createDocumentFragment();
-				let lastIndex = 0;
-				
-				// regexをリセットして再実行
-				regex.lastIndex = 0;
-				while ((match = regex.exec(text)) !== null) {
-					// マッチ前のテキスト
-					if (match.index > lastIndex) {
-						fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
-					}
-
-					// ハイライトスパン
-					const colorName = match[1];
-					const content = match[2];
-					const color = this.settings.colors.find(c => c.name === colorName);
-					
-					const span = document.createElement('span');
-					span.classList.add('better-highlight-processed');
-					
-					if (color && color.enabled) {
-						span.classList.add(`better-highlight-${color.id}`);
-					} else {
-						// 未定義の色の場合はデフォルトスタイル
-						span.style.backgroundColor = '#ffeb3b';
-						span.style.color = '#000000';
-						span.style.padding = '1px 2px';
-						span.style.borderRadius = '2px';
-					}
-					span.textContent = content;
-					fragment.appendChild(span);
-
-					lastIndex = match.index + match[0].length;
-				}
-
-				// 残りのテキスト
-				if (lastIndex < text.length) {
-					fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
-				}
-
-				parent.replaceChild(fragment, textNode);
-			}
-		});
-	}
-
-	private parseHotkey(hotkey: string): { modifiers: Modifier[], key: string } {
-		const parts = hotkey.split('+');
-		const key = parts.pop() || '';
-		const modifiers = parts.map(mod => mod.toLowerCase()) as Modifier[];
+		console.log('Setting up MarkdownPostProcessor...');
 		
-		return { modifiers, key };
+		this.registerMarkdownPostProcessor((element, context) => {
+			console.log('=== MarkdownPostProcessor called ===');
+			console.log('Processing element:', element);
+			console.log('Element content:', element.textContent);
+			
+			// 再帰的にすべてのノードを処理
+			this.processNode(element);
+		});
+		
+		console.log('MarkdownPostProcessor registered successfully');
+	}
+
+	private processNode(node: Node) {
+		if (node.nodeType === Node.TEXT_NODE) {
+			const textNode = node as Text;
+			const text = textNode.textContent || '';
+			
+			// カスタムハイライト構文をチェック
+			const regex = /===\(([^)]+)\)([^=]+)===/;
+			const match = text.match(regex);
+			
+			if (match) {
+				console.log(`Found custom syntax: ${match[0]}`);
+				console.log(`Color: ${match[1]}, Content: ${match[2]}`);
+				
+				this.replaceTextWithHighlight(textNode, match);
+			}
+		} else if (node.nodeType === Node.ELEMENT_NODE) {
+			// 既に処理済みの要素はスキップ
+			const element = node as Element;
+			if (element.classList.contains('better-highlight-processed')) {
+				return;
+			}
+			
+			// 子ノードを処理（配列にコピーしてから処理）
+			const children = Array.from(node.childNodes);
+			children.forEach(child => this.processNode(child));
+		}
+	}
+
+	private replaceTextWithHighlight(textNode: Text, match: RegExpMatchArray) {
+		const text = textNode.textContent || '';
+		const fullMatch = match[0];
+		const colorName = match[1];
+		const content = match[2];
+		const matchIndex = text.indexOf(fullMatch);
+		
+		if (matchIndex === -1) return;
+		
+		const parent = textNode.parentNode;
+		if (!parent) return;
+		
+		console.log(`Replacing "${fullMatch}" with highlighted "${content}" in color ${colorName}`);
+		
+		// DocumentFragmentを作成
+		const fragment = document.createDocumentFragment();
+		
+		// マッチ前のテキスト
+		if (matchIndex > 0) {
+			const beforeText = text.substring(0, matchIndex);
+			fragment.appendChild(document.createTextNode(beforeText));
+		}
+		
+		// ハイライトスパンを作成
+		const span = document.createElement('span');
+		span.className = 'better-highlight-processed'; // 処理済みマーク
+		
+		const color = this.settings.colors.find(c => c.name === colorName);
+		if (color && color.enabled) {
+			span.classList.add(`better-highlight-${color.id}`);
+			console.log(`Applied class: better-highlight-${color.id}`);
+		} else {
+			// 未定義の色の場合はデフォルトスタイル
+			span.style.backgroundColor = '#ffeb3b';
+			span.style.color = '#000000';
+			span.style.padding = '1px 2px';
+			span.style.borderRadius = '2px';
+			console.log(`Applied default style for unknown color: ${colorName}`);
+		}
+		
+		span.textContent = content;
+		fragment.appendChild(span);
+		
+		// マッチ後のテキスト
+		const afterText = text.substring(matchIndex + fullMatch.length);
+		if (afterText.length > 0) {
+			const afterTextNode = document.createTextNode(afterText);
+			fragment.appendChild(afterTextNode);
+			
+			// 残りのテキストにも構文があるかチェック（再帰処理）
+			setTimeout(() => this.processNode(afterTextNode), 0);
+		}
+		
+		// 元のテキストノードを置換
+		parent.replaceChild(fragment, textNode);
+		console.log('Text node replacement completed');
 	}
 
 	private getContrastColor(hexColor: string): string {
@@ -278,6 +404,17 @@ class BetterHighlightSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		containerEl.createEl('h2', { text: 'Better Highlight Settings' });
+		
+		// 使用方法の説明
+		const descEl = containerEl.createDiv('setting-item-description');
+		descEl.innerHTML = `
+			<p><strong>使用方法：</strong></p>
+			<ul>
+				<li>カスタムハイライト：<code>===(colorname)テキスト===</code></li>
+				<li>通常のハイライト：<code>==テキスト==</code></li>
+			</ul>
+			<p><strong>ホットキー：</strong> 設定 → ホットキー → "Better Highlight" で各色のショートカットを設定できます</p>
+		`;
 
 		// 各色の設定
 		this.plugin.settings.colors.forEach((color, index) => {
@@ -331,18 +468,6 @@ class BetterHighlightSettingTab extends PluginSettingTab {
 						.setValue(color.color)
 						.onChange(async (value) => {
 							this.plugin.settings.colors[index].color = value;
-							await this.plugin.saveSettings();
-						}));
-
-				// ホットキー
-				new Setting(colorDiv)
-					.setName('ホットキー')
-					.setDesc('このカラーのショートカット（例: Mod+Shift+B）')
-					.addText(text => text
-						.setPlaceholder('Mod+Shift+B')
-						.setValue(color.hotkey || '')
-						.onChange(async (value) => {
-							this.plugin.settings.colors[index].hotkey = value;
 							await this.plugin.saveSettings();
 						}));
 			}

@@ -6,7 +6,6 @@ export interface HighlightColor {
 	name: string;
 	displayName: string;
 	color: string;
-	hotkey?: string;
 	enabled: boolean;
 }
 
@@ -16,7 +15,6 @@ export interface HighlightColor {
 export interface BetterHighlightSettings {
 	colors: HighlightColor[];
 	defaultColorId: string;
-	enableLivePreview: boolean;
 }
 
 /**
@@ -29,7 +27,6 @@ export const DEFAULT_SETTINGS: BetterHighlightSettings = {
 			name: 'yellow',
 			displayName: '黄色',
 			color: '#ffeb3b',
-			hotkey: 'Mod+Shift+Y',
 			enabled: true
 		},
 		{
@@ -37,7 +34,6 @@ export const DEFAULT_SETTINGS: BetterHighlightSettings = {
 			name: 'blue', 
 			displayName: '青',
 			color: '#2196f3',
-			hotkey: 'Mod+Shift+B',
 			enabled: true
 		},
 		{
@@ -45,7 +41,6 @@ export const DEFAULT_SETTINGS: BetterHighlightSettings = {
 			name: 'green',
 			displayName: '緑',
 			color: '#4caf50',
-			hotkey: 'Mod+Shift+G',
 			enabled: true
 		},
 		{
@@ -53,7 +48,6 @@ export const DEFAULT_SETTINGS: BetterHighlightSettings = {
 			name: 'red',
 			displayName: '赤',
 			color: '#f44336',
-			hotkey: 'Mod+Shift+R',
 			enabled: true
 		},
 		{
@@ -61,10 +55,8 @@ export const DEFAULT_SETTINGS: BetterHighlightSettings = {
 			name: 'purple',
 			displayName: '紫',
 			color: '#9c27b0',
-			hotkey: 'Mod+Shift+P',
 			enabled: true
 		}
 	],
-	defaultColorId: 'yellow',
-	enableLivePreview: true
+	defaultColorId: 'yellow'
 }; 
