@@ -291,143 +291,73 @@ mark, .cm-highlight {
 			console.log('Element tagName:', element.tagName);
 			console.log('Element textContent:', element.textContent);
 			console.log('Element innerHTML:', element.innerHTML);
-			console.log('Element outerHTML:', element.outerHTML);
-			console.log('Context:', context);
 			
-			// 実際にカスタム構文が含まれているかをチェック
-			const hasCustomSyntax = element.textContent?.includes('===') || false;
-			console.log('Has === in textContent:', hasCustomSyntax);
-			
-			if (hasCustomSyntax) {
-				console.log('🔍 Found === in content, analyzing...');
-				console.log('Full textContent:', JSON.stringify(element.textContent));
-				
-				// 全ての子ノードを分析
-				this.analyzeAllNodes(element, 0);
+			// より積極的にMarkdownPostProcessorの動作を確認
+			if (element.textContent) {
+				console.log('🔍 Processing element with content:', element.textContent.substring(0, 100));
 			}
 			
-			// 再帰的にすべてのノードを処理
-			this.processNode(element);
+			// シンプルなアプローチ：innerHTML全体を処理
+			this.processElementForReading(element);
 		});
 		
 		console.log('MarkdownPostProcessor registered successfully');
 	}
 
-	private analyzeAllNodes(node: Node, depth: number) {
-		const indent = '  '.repeat(depth);
-		console.log(`${indent}Node Type: ${node.nodeType} (${this.getNodeTypeName(node.nodeType)})`);
-		console.log(`${indent}Node Content: "${node.textContent}"`);
+	private processElementForReading(element: HTMLElement) {
+		console.log('🔄 Processing element for reading view');
 		
-		if (node.nodeType === Node.ELEMENT_NODE) {
-			const element = node as Element;
-			console.log(`${indent}Element tagName: ${element.tagName}`);
-			console.log(`${indent}Element className: ${element.className}`);
-			console.log(`${indent}Element innerHTML: ${element.innerHTML}`);
-		}
+		// innerHTML全体をチェック
+		let html = element.innerHTML;
+		console.log('Original HTML:', html);
 		
-		// 子ノードを再帰的に分析
-		node.childNodes.forEach((child, index) => {
-			console.log(`${indent}Child ${index}:`);
-			this.analyzeAllNodes(child, depth + 1);
+		// Obsidianによって変換された形式を処理: <mark>=(colorname)content</mark>=
+		const obsidianConvertedRegex = /<mark>=\(([^)]+)\)([^<]+)<\/mark>=/g;
+		let hasChanges = false;
+		
+		html = html.replace(obsidianConvertedRegex, (match, colorName, content) => {
+			console.log(`🎯 Found Obsidian-converted syntax in reading view: ${match}`);
+			console.log(`Color: ${colorName}, Content: ${content}`);
+			
+			const color = this.settings.colors.find(c => c.name === colorName);
+			
+			if (color && color.enabled) {
+				console.log(`✅ Applying color ${colorName} to content: ${content}`);
+				hasChanges = true;
+				return `<span class="better-highlight-${color.id} better-highlight-processed">${content}</span>`;
+			} else {
+				console.log(`❌ Unknown color ${colorName}, using default`);
+				hasChanges = true;
+				return `<span style="background-color: #ffeb3b; color: #000000; padding: 1px 2px; border-radius: 2px;">${content}</span>`;
+			}
 		});
-	}
-
-	private getNodeTypeName(nodeType: number): string {
-		switch (nodeType) {
-			case Node.ELEMENT_NODE: return 'ELEMENT';
-			case Node.TEXT_NODE: return 'TEXT';
-			case Node.COMMENT_NODE: return 'COMMENT';
-			case Node.DOCUMENT_NODE: return 'DOCUMENT';
-			case Node.DOCUMENT_TYPE_NODE: return 'DOCTYPE';
-			case Node.DOCUMENT_FRAGMENT_NODE: return 'FRAGMENT';
-			default: return 'UNKNOWN';
-		}
-	}
-
-	private processNode(node: Node) {
-		if (node.nodeType === Node.TEXT_NODE) {
-			const textNode = node as Text;
-			const text = textNode.textContent || '';
+		
+		// 元の構文も念のためチェック（万が一直接含まれている場合）
+		const originalRegex = /===\(([^)]+)\)([^=]+)===/g;
+		html = html.replace(originalRegex, (match, colorName, content) => {
+			console.log(`🎯 Found original syntax in reading view: ${match}`);
+			console.log(`Color: ${colorName}, Content: ${content}`);
 			
-			// カスタムハイライト構文をチェック
-			const regex = /===\(([^)]+)\)([^=]+)===/;
-			const match = text.match(regex);
+			const color = this.settings.colors.find(c => c.name === colorName);
 			
-			if (match) {
-				console.log(`Found custom syntax: ${match[0]}`);
-				console.log(`Color: ${match[1]}, Content: ${match[2]}`);
-				
-				this.replaceTextWithHighlight(textNode, match);
+			if (color && color.enabled) {
+				console.log(`✅ Applying color ${colorName} to content: ${content}`);
+				hasChanges = true;
+				return `<span class="better-highlight-${color.id} better-highlight-processed">${content}</span>`;
+			} else {
+				console.log(`❌ Unknown color ${colorName}, using default`);
+				hasChanges = true;
+				return `<span style="background-color: #ffeb3b; color: #000000; padding: 1px 2px; border-radius: 2px;">${content}</span>`;
 			}
-		} else if (node.nodeType === Node.ELEMENT_NODE) {
-			// 既に処理済みの要素はスキップ
-			const element = node as Element;
-			if (element.classList.contains('better-highlight-processed')) {
-				return;
-			}
-			
-			// 子ノードを処理（配列にコピーしてから処理）
-			const children = Array.from(node.childNodes);
-			children.forEach(child => this.processNode(child));
-		}
-	}
-
-	private replaceTextWithHighlight(textNode: Text, match: RegExpMatchArray) {
-		const text = textNode.textContent || '';
-		const fullMatch = match[0];
-		const colorName = match[1];
-		const content = match[2];
-		const matchIndex = text.indexOf(fullMatch);
+		});
 		
-		if (matchIndex === -1) return;
-		
-		const parent = textNode.parentNode;
-		if (!parent) return;
-		
-		console.log(`Replacing "${fullMatch}" with highlighted "${content}" in color ${colorName}`);
-		
-		// DocumentFragmentを作成
-		const fragment = document.createDocumentFragment();
-		
-		// マッチ前のテキスト
-		if (matchIndex > 0) {
-			const beforeText = text.substring(0, matchIndex);
-			fragment.appendChild(document.createTextNode(beforeText));
-		}
-		
-		// ハイライトスパンを作成
-		const span = document.createElement('span');
-		span.className = 'better-highlight-processed'; // 処理済みマーク
-		
-		const color = this.settings.colors.find(c => c.name === colorName);
-		if (color && color.enabled) {
-			span.classList.add(`better-highlight-${color.id}`);
-			console.log(`Applied class: better-highlight-${color.id}`);
+		if (hasChanges) {
+			console.log('🎉 Updating element HTML in reading view');
+			console.log('New HTML:', html);
+			element.innerHTML = html;
 		} else {
-			// 未定義の色の場合はデフォルトスタイル
-			span.style.backgroundColor = '#ffeb3b';
-			span.style.color = '#000000';
-			span.style.padding = '1px 2px';
-			span.style.borderRadius = '2px';
-			console.log(`Applied default style for unknown color: ${colorName}`);
+			console.log('No changes needed for this element');
 		}
-		
-		span.textContent = content;
-		fragment.appendChild(span);
-		
-		// マッチ後のテキスト
-		const afterText = text.substring(matchIndex + fullMatch.length);
-		if (afterText.length > 0) {
-			const afterTextNode = document.createTextNode(afterText);
-			fragment.appendChild(afterTextNode);
-			
-			// 残りのテキストにも構文があるかチェック（再帰処理）
-			setTimeout(() => this.processNode(afterTextNode), 0);
-		}
-		
-		// 元のテキストノードを置換
-		parent.replaceChild(fragment, textNode);
-		console.log('Text node replacement completed');
 	}
 
 	private getContrastColor(hexColor: string): string {
