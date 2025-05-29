@@ -70,8 +70,6 @@ export default class BetterHighlightPlugin extends Plugin {
 	private registerCommands() {
 		// 既存のコマンドをクリア（再登録時の重複を防ぐ）
 		// @ts-ignore
-		this.app.commands.removeCommand(`${this.manifest.id}:test-plugin`);
-		// @ts-ignore
 		this.app.commands.removeCommand(`${this.manifest.id}:create-default-highlight`);
 		// @ts-ignore
 		this.app.commands.removeCommand(`${this.manifest.id}:remove-highlight`);
@@ -80,17 +78,6 @@ export default class BetterHighlightPlugin extends Plugin {
 		this.settings.colors.forEach((color) => {
 			// @ts-ignore
 			this.app.commands.removeCommand(`${this.manifest.id}:highlight-${color.id}`);
-		});
-
-		// テスト用コマンド（デバッグ用）
-		this.addCommand({
-			id: 'test-plugin',
-			name: this.i18n.t('testCommand'),
-			callback: () => {
-				new Notice(this.i18n.t('pluginWorking'));
-				console.log('Plugin test command executed');
-				console.log('Current settings:', this.settings);
-			}
 		});
 
 		// 基本的なハイライトコマンド
@@ -385,6 +372,35 @@ mark, .cm-highlight {
 	padding-bottom: 0px;
 }
 
+/* カラーピッカーのhover時outline修正 */
+input[type="color"] {
+	outline: none !important;
+	box-shadow: none !important;
+}
+
+input[type="color"]:focus,
+input[type="color"]:hover {
+	outline: none !important;
+	box-shadow: none !important;
+}
+
+/* より具体的なセレクターでObsidianのデフォルトスタイルを上書き */
+.setting-item input[type="color"],
+.mod-settings input[type="color"] {
+	outline: none !important;
+	border: none !important;
+	box-shadow: none !important;
+}
+
+.setting-item input[type="color"]:focus,
+.setting-item input[type="color"]:hover,
+.mod-settings input[type="color"]:focus,
+.mod-settings input[type="color"]:hover {
+	outline: none !important;
+	border: none !important;
+	box-shadow: none !important;
+}
+
 `;
 
 		// 各色のCSSルールを生成 - markタグと同じスタイル
@@ -649,22 +665,15 @@ class BetterHighlightSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		containerEl.createEl('h2', { text: this.plugin.i18n.t('settingsTitle') });
-		
-		// デバッグ情報
-		const debugEl = containerEl.createDiv('setting-item-description');
-		debugEl.innerHTML = `<p><strong>Debug:</strong> ${this.plugin.i18n.t('settingsTitle')} - ${this.plugin.settings.colors.length} colors</p>`;
-		
-		// 使用方法の説明
-		const descEl = containerEl.createDiv('setting-item-description');
-		descEl.innerHTML = `
-			<p><strong>${this.plugin.i18n.t('usageTitle')}</strong></p>
-			<ul>
-				<li>${this.plugin.i18n.t('usageCustom')}</li>
-				<li>${this.plugin.i18n.t('usageNormal')}</li>
-			</ul>
-			<p><strong>${this.plugin.i18n.t('hotkeyTitle')}</strong> ${this.plugin.i18n.t('hotkeyDesc')}</p>
-		`;
+		// Documentation
+		new Setting(containerEl)
+			.setName(this.plugin.i18n.t('documentation'))
+			.setDesc(this.plugin.i18n.t('documentationDesc'))
+			.addButton(button => button
+				.setButtonText(this.plugin.i18n.t('openReadme'))
+				.onClick(() => {
+					window.open('https://github.com/edacchi-chonmage/better-highlight#better-highlight-plugin-for-obsidian', '_blank');
+				}));
 
 		// 色追加ボタン
 		new Setting(containerEl)
@@ -674,7 +683,6 @@ class BetterHighlightSettingTab extends PluginSettingTab {
 				.setButtonText(this.plugin.i18n.t('addColorButton'))
 				.setCta()
 				.onClick(async () => {
-					console.log('🎨 色追加ボタンがクリックされました');
 					const newId = `color-${Date.now()}`;
 					const newColor = {
 						id: newId,
@@ -683,81 +691,51 @@ class BetterHighlightSettingTab extends PluginSettingTab {
 						color: '#ff9800',
 						enabled: true
 					};
-					console.log('新しい色を追加:', newColor);
 					this.plugin.settings.colors.push(newColor);
 					await this.plugin.saveSettings();
-					console.log('設定保存完了、再描画します');
-					this.display(); // 再描画
+					this.display();
 				}));
+
+		// Colors section header
+		if (this.plugin.settings.colors.length > 0) {
+			containerEl.createEl('h3', { text: this.plugin.i18n.t('colorsSection') });
+		}
 
 		// 各色の設定
 		this.plugin.settings.colors.forEach((color, index) => {
-			const colorDiv = containerEl.createDiv('better-highlight-color-setting');
+			// Color group header
+			const headerEl = containerEl.createEl('h4', { text: `${this.plugin.getColorDisplayName(color)}` });
+			headerEl.setAttribute('data-color-index', index.toString()); // ヘッダーを識別するためのID
 			
-			// 色プレビューを含むヘッダー
-			const headerDiv = colorDiv.createDiv('color-setting-header');
-			headerDiv.style.display = 'flex';
-			headerDiv.style.alignItems = 'center';
-			headerDiv.style.gap = '10px';
-			headerDiv.style.justifyContent = 'space-between';
-			
-			const leftDiv = headerDiv.createDiv();
-			leftDiv.style.display = 'flex';
-			leftDiv.style.alignItems = 'center';
-			leftDiv.style.gap = '10px';
-			
-			const titleEl = leftDiv.createEl('h3', { text: `Color: ${this.plugin.getColorDisplayName(color)}` });
-			titleEl.style.margin = '0';
-			
-			// 色プレビュー
-			const preview = leftDiv.createEl('span', { text: this.plugin.i18n.t('previewText') });
-			preview.className = `better-highlight-${color.id}`;
-			preview.style.padding = '2px 8px';
-			preview.style.borderRadius = '4px';
-			preview.style.fontSize = '12px';
-
-			// 削除ボタン（色が1つ以上ある場合のみ表示）
-			if (this.plugin.settings.colors.length > 1) {
-				const deleteButton = headerDiv.createEl('button', { text: '×' });
-				deleteButton.style.background = 'var(--color-red)';
-				deleteButton.style.color = 'white';
-				deleteButton.style.border = 'none';
-				deleteButton.style.borderRadius = '50%';
-				deleteButton.style.width = '24px';
-				deleteButton.style.height = '24px';
-				deleteButton.style.cursor = 'pointer';
-				deleteButton.style.fontSize = '16px';
-				deleteButton.style.display = 'flex';
-				deleteButton.style.alignItems = 'center';
-				deleteButton.style.justifyContent = 'center';
-				deleteButton.title = this.plugin.i18n.t('deleteColorTooltip');
-				
-				deleteButton.onclick = async () => {
-					if (this.plugin.settings.colors.length > 1) {
-						this.plugin.settings.colors.splice(index, 1);
-						await this.plugin.saveSettings();
-						this.display(); // 再描画
-					}
-				};
-			}
-
-			// 有効/無効
-			new Setting(colorDiv)
-				.setName(this.plugin.i18n.t('enabledLabel'))
-				.setDesc(this.plugin.i18n.t('enabledDesc'))
+			// Enable/Disable toggle
+			new Setting(containerEl)
+				.setName(this.plugin.i18n.t('enableHighlight'))
+				.setDesc(this.plugin.i18n.t('enableHighlightDesc', { color: this.plugin.getColorDisplayName(color) }))
 				.addToggle(toggle => toggle
 					.setValue(color.enabled)
 					.onChange(async (value) => {
 						this.plugin.settings.colors[index].enabled = value;
 						await this.plugin.saveSettings();
-						this.display(); // 再描画
+						this.display(); // Need to refresh to show/hide sub-settings
+					}))
+				.addButton(button => button
+					.setButtonText(this.plugin.i18n.t('remove'))
+					.setWarning()
+					.onClick(async () => {
+						// 確認ダイアログを表示
+						const confirmed = confirm(this.plugin.i18n.t('removeConfirm', { colorName: this.plugin.getColorDisplayName(color) }));
+						if (confirmed) {
+							this.plugin.settings.colors.splice(index, 1);
+							await this.plugin.saveSettings();
+							this.display();
+						}
 					}));
 
 			if (color.enabled) {
-				// 色名
-				new Setting(colorDiv)
-					.setName(this.plugin.i18n.t('colorNameLabel'))
-					.setDesc(this.plugin.i18n.t('colorNameDesc'))
+				// Color name
+				new Setting(containerEl)
+					.setName(this.plugin.i18n.t('colorName'))
+					.setDesc(this.plugin.i18n.t('colorNameDescNew'))
 					.addText(text => text
 						.setPlaceholder('blue')
 						.setValue(color.name)
@@ -766,71 +744,65 @@ class BetterHighlightSettingTab extends PluginSettingTab {
 							await this.plugin.saveSettings();
 						}));
 
-				// 表示名
-				new Setting(colorDiv)
-					.setName(this.plugin.i18n.t('displayNameLabel'))
-					.setDesc(this.plugin.i18n.t('displayNameDesc'))
+				// Display name
+				new Setting(containerEl)
+					.setName(this.plugin.i18n.t('displayName'))
+					.setDesc(this.plugin.i18n.t('displayNameDescNew'))
 					.addText(text => text
 						.setPlaceholder('Blue')
 						.setValue(color.displayName)
 						.onChange(async (value) => {
 							this.plugin.settings.colors[index].displayName = value;
 							await this.plugin.saveSettings();
-							this.display(); // ヘッダーの表示名を更新するため再描画
+							
+							// ヘッダーのテキストのみを更新（フォーカスを保持）
+							const headerToUpdate = containerEl.querySelector(`h4[data-color-index="${index}"]`) as HTMLElement;
+							if (headerToUpdate) {
+								headerToUpdate.textContent = this.plugin.getColorDisplayName(this.plugin.settings.colors[index]);
+							}
 						}));
 
-				// カラーピッカー
-				new Setting(colorDiv)
-					.setName(this.plugin.i18n.t('colorPickerLabel'))
-					.setDesc(this.plugin.i18n.t('colorPickerDesc'))
+				// Color picker
+				new Setting(containerEl)
+					.setName(this.plugin.i18n.t('color'))
+					.setDesc(this.plugin.i18n.t('colorDescNew'))
 					.addColorPicker(colorPicker => colorPicker
 						.setValue(color.color)
 						.onChange(async (value) => {
 							this.plugin.settings.colors[index].color = value;
 							await this.plugin.saveSettings();
-							// CSSが再生成されるので、プレビューも自動更新される
-							this.display(); // 再描画でプレビューも更新
 						}));
+			}
+			
+			// Add separator between colors (except for the last one)
+			if (index < this.plugin.settings.colors.length - 1) {
+				containerEl.createEl('hr', { attr: { style: 'margin: 24px 0 16px 0; border: none; border-top: 1px solid var(--background-modifier-border);' } });
 			}
 		});
 
-		// Buy me a coffee ボタン
-		const supportSection = containerEl.createDiv('setting-item');
-		supportSection.style.marginTop = '40px';
-		supportSection.style.paddingTop = '20px';
-		supportSection.style.borderTop = '1px solid var(--background-modifier-border)';
-		supportSection.style.textAlign = 'center';
+		// Support section
+		containerEl.createEl('h3', { text: this.plugin.i18n.t('supportSection') });
 		
-		const supportTitle = supportSection.createEl('h3', { text: 'Support Development' });
-		supportTitle.style.marginBottom = '16px';
+		const supportSetting = new Setting(containerEl)
+			.setName(this.plugin.i18n.t('buyMeACoffee'))
+			.setDesc(this.plugin.i18n.t('buyMeACoffeeDesc'));
 		
-		const supportDesc = supportSection.createDiv('setting-item-description');
-		supportDesc.innerHTML = '<p>If you find this plugin helpful, consider supporting its development:</p>';
-		supportDesc.style.marginBottom = '16px';
-		
-		// Buy me a coffee button (image + link)
-		const buttonContainer = supportSection.createDiv();
-		buttonContainer.style.display = 'inline-block';
-		
-		const coffeeLink = buttonContainer.createEl('a');
-		coffeeLink.href = 'https://www.buymeacoffee.com/edacchi_chonmage';
-		coffeeLink.target = '_blank';
-		coffeeLink.style.textDecoration = 'none';
-		
-		const coffeeButton = coffeeLink.createEl('img');
-		coffeeButton.src = 'https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png';
-		coffeeButton.alt = 'Buy Me A Coffee';
-		coffeeButton.style.height = '60px';
-		coffeeButton.style.width = '217px';
-		coffeeButton.style.borderRadius = '8px';
-		coffeeButton.style.cursor = 'pointer';
-		
-		// ホバー効果
-		coffeeButton.addEventListener('mouseover', () => {
-			coffeeButton.style.opacity = '0.8';
+		// Buy me a coffeeボタンを追加
+		const supportContainer = supportSetting.controlEl.createDiv();
+		const link = supportContainer.createEl('a', {
+			href: 'https://www.buymeacoffee.com/edacchi_chonmage'
 		});
-		coffeeButton.addEventListener('mouseout', () => {
-			coffeeButton.style.opacity = '1';
+		link.style.display = 'inline-block';
+		const img = link.createEl('img', {
+			attr: {
+				src: 'https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png',
+				alt: 'Buy Me A Coffee',
+				style: 'height: 40px; width: auto; border-radius: 8px;'
+			}
+		});
+		link.addEventListener('click', (e) => {
+			e.preventDefault();
+			window.open('https://www.buymeacoffee.com/edacchi_chonmage', '_blank');
 		});
 	}
 } 

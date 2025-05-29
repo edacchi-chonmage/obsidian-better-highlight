@@ -54,10 +54,28 @@ export interface LanguageStrings {
 	previewText: string;
 	
 	// Commands
-	testCommand: string;
 	createDefaultHighlight: string;
 	removeHighlight: string;
 	createColorHighlight: string;
+	
+	// Settings UI new
+	documentation: string;
+	documentationDesc: string;
+	openReadme: string;
+	colorsSection: string;
+	enableHighlight: string;
+	enableHighlightDesc: string;
+	colorName: string;
+	colorNameDescNew: string;
+	displayName: string;
+	displayNameDescNew: string;
+	color: string;
+	colorDescNew: string;
+	remove: string;
+	removeConfirm: string;
+	supportSection: string;
+	buyMeACoffee: string;
+	buyMeACoffeeDesc: string;
 }
 
 /**

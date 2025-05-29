@@ -36,10 +36,28 @@ const ja: LanguageStrings = {
 	previewText: 'サンプルテキスト',
 	
 	// Commands
-	testCommand: 'プラグインテスト（動作確認用）',
 	createDefaultHighlight: 'デフォルトハイライトを作成',
 	removeHighlight: 'ハイライトを削除',
-	createColorHighlight: '{color}ハイライトを作成'
+	createColorHighlight: '{color}ハイライトを作成',
+	
+	// Settings UI new
+	documentation: 'ドキュメント',
+	documentationDesc: '完全なドキュメントと使用例を表示',
+	openReadme: 'READMEを開く',
+	colorsSection: '色',
+	enableHighlight: 'ハイライトを有効にする',
+	enableHighlightDesc: '{color}ハイライトを有効または無効にします。',
+	colorName: '色名',
+	colorNameDescNew: 'Markdownシンタックスで使用される識別子 (例: \"blue\" で ===(blue)テキスト===)',
+	displayName: '表示名',
+	displayNameDescNew: 'コマンドとUIで表示される名前',
+	color: '色',
+	colorDescNew: 'カラーサークルをクリックしてハイライト色を変更します。',
+	remove: '削除',
+	removeConfirm: '本当に "{colorName}" 色を削除しますか？この操作は元に戻せません。',
+	supportSection: 'サポート',
+	buyMeACoffee: 'Buy me a coffee',
+	buyMeACoffeeDesc: 'このプラグインが役に立つと思ったら、開発をサポートすることを検討してください。'
 };
 
 // 英語翻訳
@@ -78,10 +96,28 @@ const en: LanguageStrings = {
 	previewText: 'Sample Text',
 	
 	// Commands
-	testCommand: 'Test Plugin (Debug)',
 	createDefaultHighlight: 'Create Default Highlight',
 	removeHighlight: 'Remove Highlight',
-	createColorHighlight: 'Create {color} Highlight'
+	createColorHighlight: 'Create {color} Highlight',
+	
+	// Settings UI new
+	documentation: 'Documentation',
+	documentationDesc: 'Display complete documentation and usage examples',
+	openReadme: 'Open README',
+	colorsSection: 'Colors',
+	enableHighlight: 'Enable Highlight',
+	enableHighlightDesc: 'Enable or disable {color} highlight',
+	colorName: 'Color Name',
+	colorNameDescNew: 'Identifier used in Markdown syntax (e.g., \"blue\" for ===(blue)text===)',
+	displayName: 'Display Name',
+	displayNameDescNew: 'Name shown in command and UI',
+	color: 'Color',
+	colorDescNew: 'Click the color circle to change the highlight color',
+	remove: 'Remove',
+	removeConfirm: 'Are you sure you want to remove "{colorName}"? This operation cannot be undone.',
+	supportSection: 'Support',
+	buyMeACoffee: 'Buy me a coffee',
+	buyMeACoffeeDesc: 'If you find this plugin useful, consider supporting its development'
 };
 
 // 中国語簡体字翻訳
@@ -120,10 +156,28 @@ const zhCN: LanguageStrings = {
 	previewText: '示例文本',
 	
 	// Commands
-	testCommand: '测试插件（调试）',
 	createDefaultHighlight: '创建默认高亮',
 	removeHighlight: '删除高亮',
-	createColorHighlight: '创建{color}高亮'
+	createColorHighlight: '创建{color}高亮',
+	
+	// Settings UI new
+	documentation: '文档',
+	documentationDesc: '显示完整的文档和使用示例',
+	openReadme: '打开README',
+	colorsSection: '颜色',
+	enableHighlight: '启用高亮',
+	enableHighlightDesc: '启用或禁用{color}高亮',
+	colorName: '颜色名称',
+	colorNameDescNew: '在Markdown语法中使用的标识符（例如：\"blue\"用于===(blue)text===)',
+	displayName: '显示名称',
+	displayNameDescNew: '在命令和UI中显示的名称',
+	color: '颜色',
+	colorDescNew: '点击颜色圆圈以更改高亮颜色',
+	remove: '删除',
+	removeConfirm: '您确定要删除"{colorName}"?此操作无法撤消',
+	supportSection: '支持',
+	buyMeACoffee: '请我喝杯咖啡',
+	buyMeACoffeeDesc: '如果您觉得这个插件有用，请考虑支持其开发'
 };
 
 // 中国语繁体字翻訳
@@ -162,10 +216,28 @@ const zhTW: LanguageStrings = {
 	previewText: '範例文字',
 	
 	// Commands
-	testCommand: '測試外掛（除錯）',
 	createDefaultHighlight: '建立預設螢光筆',
 	removeHighlight: '刪除螢光筆',
-	createColorHighlight: '建立{color}螢光筆'
+	createColorHighlight: '建立{color}螢光筆',
+	
+	// Settings UI new
+	documentation: '文件',
+	documentationDesc: '顯示完整的文件和使用示例',
+	openReadme: '開啟README',
+	colorsSection: '顏色',
+	enableHighlight: '啟用高亮',
+	enableHighlightDesc: '啟用或禁用{color}高亮',
+	colorName: '顏色名稱',
+	colorNameDescNew: '在Markdown語法中使用的識別符（例如：\"blue\"用於===(blue)text===)',
+	displayName: '顯示名稱',
+	displayNameDescNew: '在命令和UI中顯示的名稱',
+	color: '顏色',
+	colorDescNew: '點擊顏色圓圈以更改高亮顏色',
+	remove: '刪除',
+	removeConfirm: '您確定要刪除"{colorName}"?此操作無法撤銷',
+	supportSection: '支持',
+	buyMeACoffee: '請我喝杯咖啡',
+	buyMeACoffeeDesc: '如果您覺得這個插件有用，請考慮支持其開發'
 };
 
 // 韓国語翻訳
@@ -204,10 +276,28 @@ const ko: LanguageStrings = {
 	previewText: '샘플 텍스트',
 	
 	// Commands
-	testCommand: '플러그인 테스트 (디버그)',
 	createDefaultHighlight: '기본 하이라이트 생성',
 	removeHighlight: '하이라이트 제거',
-	createColorHighlight: '{color} 하이라이트 생성'
+	createColorHighlight: '{color} 하이라이트 생성',
+	
+	// Settings UI new
+	documentation: '문서',
+	documentationDesc: '완전한 문서와 사용 예제를 표시',
+	openReadme: 'README 열기',
+	colorsSection: '색상',
+	enableHighlight: '하이라이트 활성화',
+	enableHighlightDesc: '{color} 하이라이트를 활성화 또는 비활성화',
+	colorName: '색상 이름',
+	colorNameDescNew: 'Markdown 구문에서 사용되는 식별자 (예: \"blue\"는 ===(blue)텍스트===)',
+	displayName: '표시 이름',
+	displayNameDescNew: '명령어와 UI에서 표시되는 이름',
+	color: '색상',
+	colorDescNew: '색상 원을 클릭하여 하이라이트 색상을 변경',
+	remove: '제거',
+	removeConfirm: '"{colorName}"을 정말로 제거하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
+	supportSection: '지원',
+	buyMeACoffee: '커피 사주기',
+	buyMeACoffeeDesc: '이 플러그인이 유용하다고 생각하면 개발을 지원하는 것을 고려해보세요'
 };
 
 // ドイツ語翻訳
@@ -246,10 +336,28 @@ const de: LanguageStrings = {
 	previewText: 'Beispieltext',
 	
 	// Commands
-	testCommand: 'Plugin testen (Debug)',
 	createDefaultHighlight: 'Standard-Markierung erstellen',
 	removeHighlight: 'Markierung entfernen',
-	createColorHighlight: '{color} Markierung erstellen'
+	createColorHighlight: '{color} Markierung erstellen',
+	
+	// Settings UI new
+	documentation: 'Dokumentation',
+	documentationDesc: 'Vollständige Dokumentation und Verwendungsbeispiele anzeigen',
+	openReadme: 'README öffnen',
+	colorsSection: 'Farben',
+	enableHighlight: 'Hervorhebung aktivieren',
+	enableHighlightDesc: '{color} Hervorhebung aktivieren oder deaktivieren',
+	colorName: 'Farbname',
+	colorNameDescNew: 'Bezeichner, der in der Markdown-Syntax verwendet wird (z.B. \"blue\" für ===(blue)text===)',
+	displayName: 'Anzeigename',
+	displayNameDescNew: 'Name, der in Befehlen und der Benutzeroberfläche angezeigt wird',
+	color: 'Farbe',
+	colorDescNew: 'Klicken Sie auf die Farbkreise, um die Hervorhebungsfarbe zu ändern',
+	remove: 'Entfernen',
+	removeConfirm: 'Sind Sie sicher, dass Sie "{colorName}" entfernen möchten? Diese Aktion kann nicht rückgängig gemacht werden.',
+	supportSection: 'Unterstützung',
+	buyMeACoffee: 'Buy me a coffee',
+	buyMeACoffeeDesc: 'Wenn Ihnen dieses Plugin hilfreich ist, betrachten Sie bitte die Unterstützung seiner Entwicklung'
 };
 
 // フランス語翻訳
@@ -288,10 +396,28 @@ const fr: LanguageStrings = {
 	previewText: 'Texte d\'exemple',
 	
 	// Commands
-	testCommand: 'Tester le plugin (Debug)',
 	createDefaultHighlight: 'Créer un surlignage par défaut',
 	removeHighlight: 'Supprimer le surlignage',
-	createColorHighlight: 'Créer un surlignage {color}'
+	createColorHighlight: 'Créer un surlignage {color}',
+	
+	// Settings UI new
+	documentation: 'Documentation',
+	documentationDesc: 'Afficher la documentation complète et les exemples d\'utilisation',
+	openReadme: 'Ouvrir README',
+	colorsSection: 'Couleurs',
+	enableHighlight: 'Activer la mise en évidence',
+	enableHighlightDesc: 'Activer ou désactiver la mise en évidence {color}',
+	colorName: 'Nom de la couleur',
+	colorNameDescNew: 'Identificateur utilisé dans la syntaxe Markdown (par exemple, \"blue\" pour ===(blue)texte===)',
+	displayName: 'Nom d\'affichage',
+	displayNameDescNew: 'Nom affiché dans les paramètres',
+	color: 'Couleur',
+	colorDescNew: 'Cliquez sur les cercles de couleur pour changer la couleur de mise en évidence',
+	remove: 'Supprimer',
+	removeConfirm: 'Êtes-vous sûr de vouloir supprimer "{colorName}"? Cette opération ne peut être annulée',
+	supportSection: 'Support',
+	buyMeACoffee: 'Buy me a coffee',
+	buyMeACoffeeDesc: 'Si vous trouvez ce plugin utile, veuillez considérer de soutenir son développement'
 };
 
 // スペイン語翻訳
@@ -330,10 +456,28 @@ const es: LanguageStrings = {
 	previewText: 'Texto de ejemplo',
 	
 	// Commands
-	testCommand: 'Probar plugin (Debug)',
 	createDefaultHighlight: 'Crear resaltado por defecto',
 	removeHighlight: 'Eliminar resaltado',
-	createColorHighlight: 'Crear resaltado {color}'
+	createColorHighlight: 'Crear resaltado {color}',
+	
+	// Settings UI new
+	documentation: 'Documentación',
+	documentationDesc: 'Mostrar documentación completa y ejemplos de uso',
+	openReadme: 'Abrir README',
+	colorsSection: 'Colores',
+	enableHighlight: 'Habilitar resaltado',
+	enableHighlightDesc: 'Habilitar o deshabilitar resaltado {color}',
+	colorName: 'Nombre del color',
+	colorNameDescNew: 'Identificador usado en la sintaxis Markdown (por ejemplo, \"blue\" para ===(blue)texto===)',
+	displayName: 'Nombre de visualización',
+	displayNameDescNew: 'Nombre mostrado en la configuración',
+	color: 'Color',
+	colorDescNew: 'Haga clic en los círculos de color para cambiar el color de resaltado',
+	remove: 'Eliminar',
+	removeConfirm: '¿Está seguro de que desea eliminar "{colorName}"? Esta operación no se puede deshacer',
+	supportSection: 'Soporte',
+	buyMeACoffee: 'Buy me a coffee',
+	buyMeACoffeeDesc: 'Si encuentra este complemento útil, considere apoyar su desarrollo'
 };
 
 // イタリア語翻訳
@@ -372,10 +516,28 @@ const it: LanguageStrings = {
 	previewText: 'Testo di esempio',
 	
 	// Commands
-	testCommand: 'Testa plugin (Debug)',
 	createDefaultHighlight: 'Crea evidenziazione predefinita',
 	removeHighlight: 'Rimuovi evidenziazione',
-	createColorHighlight: 'Crea evidenziazione {color}'
+	createColorHighlight: 'Crea evidenziazione {color}',
+	
+	// Settings UI new
+	documentation: 'Documentazione',
+	documentationDesc: 'Mostrare la documentazione completa e gli esempi di utilizzo',
+	openReadme: 'Apri README',
+	colorsSection: 'Colori',
+	enableHighlight: 'Abilita evidenziazione',
+	enableHighlightDesc: 'Abilita o disabilita evidenziazione {color}',
+	colorName: 'Nome del colore',
+	colorNameDescNew: 'Identificatore usato nella sintassi Markdown (ad esempio, \"blue\" per ===(blue)testo===)',
+	displayName: 'Nome di visualizzazione',
+	displayNameDescNew: 'Nome mostrato nelle impostazioni',
+	color: 'Colore',
+	colorDescNew: 'Fare clic sui cerchi di colore per cambiare il colore di evidenziazione',
+	remove: 'Rimuovere',
+	removeConfirm: 'Sei sicuro di voler rimuovere "{colorName}"? Questa operazione non può essere annullata',
+	supportSection: 'Supporto',
+	buyMeACoffee: 'Buy me a coffee',
+	buyMeACoffeeDesc: 'Se trovi questo plugin utile, considera di supportare lo sviluppo'
 };
 
 // ロシア語翻訳
@@ -414,10 +576,28 @@ const ru: LanguageStrings = {
 	previewText: 'Пример текста',
 	
 	// Commands
-	testCommand: 'Тест плагина (Отладка)',
 	createDefaultHighlight: 'Создать выделение по умолчанию',
 	removeHighlight: 'Удалить выделение',
-	createColorHighlight: 'Создать выделение {color}'
+	createColorHighlight: 'Создать выделение {color}',
+	
+	// Settings UI new
+	documentation: 'Документация',
+	documentationDesc: 'Показать полную документацию и примеры использования',
+	openReadme: 'Открыть README',
+	colorsSection: 'Цвета',
+	enableHighlight: 'Включить выделение',
+	enableHighlightDesc: 'Включить или выключить выделение {color}',
+	colorName: 'Название цвета',
+	colorNameDescNew: 'Идентификатор, используемый в синтаксисе Markdown (например, \"blue\" для ===(blue)текст===)',
+	displayName: 'Отображаемое имя',
+	displayNameDescNew: 'Имя, показываемое в настройках',
+	color: 'Цвет',
+	colorDescNew: 'Нажмите на круги цветов, чтобы изменить цвет выделения',
+	remove: 'Удалить',
+	removeConfirm: 'Вы уверены, что хотите удалить "{colorName}"? Это действие нельзя отменить',
+	supportSection: 'Поддержка',
+	buyMeACoffee: 'Buy me a coffee',
+	buyMeACoffeeDesc: 'Если вам этот плагин окажется полезным, подумайте о поддержке его развития'
 };
 
 // 言語データのマップ
