@@ -1,0 +1,39 @@
+{
+  "name": "better-highlight",
+  "version": "0.1.0",
+  "description": "より良いハイライト機能を提供するObsidianプラグイン - 高度なカスタマイズ性、文脈リンク、効率的な管理機能を備えたオールインワンハイライトマネージャー",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+    "version": "node version-bump.mjs && git add manifest.json versions.json",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "test": "jest"
+  },
+  "keywords": [
+    "obsidian",
+    "plugin",
+    "highlight",
+    "annotation",
+    "notes",
+    "markdown"
+  ],
+  "author": "Better Highlight Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "@types/node": "^20.0.0",
+    "@types/jest": "^29.5.0",
+    "builtin-modules": "^3.3.0",
+    "esbuild": "^0.19.0",
+    "eslint": "^8.45.0",
+    "jest": "^29.5.0",
+    "obsidian": "latest",
+    "ts-jest": "^29.1.0",
+    "tslib": "^2.6.0",
+    "typescript": "^5.1.0"
+  },
+  "dependencies": {}
+} 

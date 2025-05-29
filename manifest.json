@@ -1,0 +1,11 @@
+{
+  "id": "better-highlight",
+  "name": "Better Highlight",
+  "version": "0.1.0",
+  "minAppVersion": "1.4.0",
+  "description": "より良いハイライト機能を提供するプラグイン。高度なカスタマイズ性、文脈リンク、効率的な管理機能を備えたオールインワンハイライトマネージャー。",
+  "author": "Better Highlight Team",
+  "authorUrl": "",
+  "fundingUrl": "",
+  "isDesktopOnly": false
+} 
