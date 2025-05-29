@@ -1,4 +1,4 @@
-import { Plugin, PluginSettingTab, Setting, App, Editor, MarkdownView, Modifier } from 'obsidian';
+import { Plugin, PluginSettingTab, Setting, App, Editor, MarkdownView, Modifier, MarkdownPostProcessor } from 'obsidian';
 import { BetterHighlightSettings, HighlightColor, DEFAULT_SETTINGS } from './types';
 
 /**
@@ -12,6 +12,7 @@ import { BetterHighlightSettings, HighlightColor, DEFAULT_SETTINGS } from './typ
  */
 export default class BetterHighlightPlugin extends Plugin {
 	settings!: BetterHighlightSettings;
+	private postProcessor?: MarkdownPostProcessor;
 
 	async onload() {
 		console.log('Better Highlight Plugin loading...');
@@ -21,6 +22,9 @@ export default class BetterHighlightPlugin extends Plugin {
 
 		// CSSスタイルの追加
 		this.addStyles();
+
+		// Markdown post processorの登録
+		this.setupMarkdownPostProcessor();
 
 		// コマンドとホットキーの登録
 		this.registerCommands();
@@ -33,6 +37,11 @@ export default class BetterHighlightPlugin extends Plugin {
 
 	onunload() {
 		console.log('Better Highlight Plugin unloading...');
+		// スタイルとprocessorの削除
+		const existingStyle = document.getElementById('better-highlight-styles');
+		if (existingStyle) {
+			existingStyle.remove();
+		}
 	}
 
 	async loadSettings() {
@@ -42,9 +51,18 @@ export default class BetterHighlightPlugin extends Plugin {
 	async saveSettings() {
 		await this.saveData(this.settings);
 		this.addStyles(); // 設定変更時にスタイルを更新
+		this.registerCommands(); // コマンドも再登録
 	}
 
 	private registerCommands() {
+		// 既存のコマンドをクリア
+		// @ts-ignore - internalAPIの使用
+		this.app.commands.removeCommand(`${this.manifest.id}:create-default-highlight`);
+		this.settings.colors.forEach((color) => {
+			// @ts-ignore - internalAPIの使用
+			this.app.commands.removeCommand(`${this.manifest.id}:highlight-${color.id}`);
+		});
+
 		// 基本的なハイライトコマンド
 		this.addCommand({
 			id: 'create-default-highlight',
@@ -127,70 +145,101 @@ mark, .cm-highlight {
 
 		style.textContent = css;
 		document.head.appendChild(style);
-
-		// カスタム構文のレンダリング登録
-		this.setupMarkdownPostProcessor();
 	}
 
 	private setupMarkdownPostProcessor() {
-		this.registerMarkdownPostProcessor((element) => {
+		// 既存のpost processorがあれば削除
+		if (this.postProcessor) {
+			// @ts-ignore - internalAPIの使用
+			this.app.metadataCache.trigger('resolve', null);
+		}
+
+		// 新しいpost processorを登録
+		this.postProcessor = this.registerMarkdownPostProcessor((element, context) => {
 			// ===(colorname)content=== を検索して置換
-			const walker = document.createTreeWalker(
-				element,
-				NodeFilter.SHOW_TEXT
-			);
+			this.processCustomHighlights(element);
+		});
+	}
 
-			const textNodes: Text[] = [];
-			let node;
-			while (node = walker.nextNode()) {
-				textNodes.push(node as Text);
-			}
-
-			textNodes.forEach((textNode) => {
-				const text = textNode.textContent || '';
-				const regex = /===\(([^)]+)\)([^=]+)===/g;
-				
-				if (regex.test(text)) {
-					const parent = textNode.parentNode;
-					if (!parent) return;
-
-					const fragment = document.createDocumentFragment();
-					let lastIndex = 0;
-					let match;
-					
-					regex.lastIndex = 0; // regexをリセット
-					while ((match = regex.exec(text)) !== null) {
-						// マッチ前のテキスト
-						if (match.index > lastIndex) {
-							fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
-						}
-
-						// ハイライトスパン
-						const colorName = match[1];
-						const content = match[2];
-						const color = this.settings.colors.find(c => c.name === colorName);
-						
-						const span = document.createElement('span');
-						if (color && color.enabled) {
-							span.className = `better-highlight-${color.id}`;
-						} else {
-							// 未定義の色の場合はデフォルトスタイル
-							span.style.backgroundColor = '#ffeb3b';
-						}
-						span.textContent = content;
-						fragment.appendChild(span);
-
-						lastIndex = match.index + match[0].length;
+	private processCustomHighlights(element: HTMLElement) {
+		const walker = document.createTreeWalker(
+			element,
+			NodeFilter.SHOW_TEXT,
+			{
+				acceptNode: (node) => {
+					// すでに処理済みの要素は除外
+					if (node.parentElement?.classList.contains('better-highlight-processed')) {
+						return NodeFilter.FILTER_REJECT;
 					}
-
-					// 残りのテキスト
-					if (lastIndex < text.length) {
-						fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
-					}
-
-					parent.replaceChild(fragment, textNode);
+					return NodeFilter.FILTER_ACCEPT;
 				}
-			});
+			}
+		);
+
+		const textNodes: Text[] = [];
+		let node;
+		while (node = walker.nextNode()) {
+			textNodes.push(node as Text);
+		}
+
+		textNodes.forEach((textNode) => {
+			const text = textNode.textContent || '';
+			const regex = /===\(([^)]+)\)([^=]+)===/g;
+			
+			let hasMatch = false;
+			let match;
+			
+			// まずマッチがあるかチェック
+			while ((match = regex.exec(text)) !== null) {
+				hasMatch = true;
+				break;
+			}
+			
+			if (hasMatch) {
+				const parent = textNode.parentNode;
+				if (!parent) return;
+
+				const fragment = document.createDocumentFragment();
+				let lastIndex = 0;
+				
+				// regexをリセットして再実行
+				regex.lastIndex = 0;
+				while ((match = regex.exec(text)) !== null) {
+					// マッチ前のテキスト
+					if (match.index > lastIndex) {
+						fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+					}
+
+					// ハイライトスパン
+					const colorName = match[1];
+					const content = match[2];
+					const color = this.settings.colors.find(c => c.name === colorName);
+					
+					const span = document.createElement('span');
+					span.classList.add('better-highlight-processed');
+					
+					if (color && color.enabled) {
+						span.classList.add(`better-highlight-${color.id}`);
+					} else {
+						// 未定義の色の場合はデフォルトスタイル
+						span.style.backgroundColor = '#ffeb3b';
+						span.style.color = '#000000';
+						span.style.padding = '1px 2px';
+						span.style.borderRadius = '2px';
+					}
+					span.textContent = content;
+					fragment.appendChild(span);
+
+					lastIndex = match.index + match[0].length;
+				}
+
+				// 残りのテキスト
+				if (lastIndex < text.length) {
+					fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+				}
+
+				parent.replaceChild(fragment, textNode);
+			}
 		});
 	}
 
