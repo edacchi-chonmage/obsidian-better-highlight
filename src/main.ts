@@ -794,5 +794,23 @@ class BetterHighlightSettingTab extends PluginSettingTab {
 						}));
 			}
 		});
+
+		// Buy me a coffee ボタン
+		const supportSection = containerEl.createDiv('setting-item');
+		supportSection.style.marginTop = '40px';
+		supportSection.style.paddingTop = '20px';
+		supportSection.style.borderTop = '1px solid var(--background-modifier-border)';
+		supportSection.style.textAlign = 'center';
+		
+		const supportTitle = supportSection.createEl('h3', { text: 'Support Development' });
+		supportTitle.style.marginBottom = '16px';
+		
+		const supportDesc = supportSection.createDiv('setting-item-description');
+		supportDesc.innerHTML = '<p>If you find this plugin helpful, consider supporting its development:</p>';
+		supportDesc.style.marginBottom = '16px';
+		
+		// Buy me a coffee script
+		const scriptContainer = supportSection.createDiv();
+		scriptContainer.innerHTML = '<script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="edacchi_chonmage" data-color="#FFDD00" data-emoji="" data-font="Bree" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#ffffff"></script>';
 	}
 } 

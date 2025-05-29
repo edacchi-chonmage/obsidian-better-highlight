@@ -1,7 +1,7 @@
 {
   "name": "better-highlight",
   "version": "0.1.0",
-  "description": "より良いハイライト機能を提供するObsidianプラグイン - 高度なカスタマイズ性、文脈リンク、効率的な管理機能を備えたオールインワンハイライトマネージャー",
+  "description": "Enhanced Markdown highlighting for Obsidian with custom colors and multi-language support",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
@@ -21,7 +21,7 @@
     "notes",
     "markdown"
   ],
-  "author": "Better Highlight Team",
+  "author": "edacchi_chonmage",
   "license": "MIT",
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^6.0.0",
