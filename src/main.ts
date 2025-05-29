@@ -1,5 +1,6 @@
 import { Plugin, PluginSettingTab, Setting, App, Editor, MarkdownView, Modifier, Notice } from 'obsidian';
 import { BetterHighlightSettings, HighlightColor, DEFAULT_SETTINGS } from './types';
+import { I18n } from './i18n';
 import { Extension } from '@codemirror/state';
 import { Decoration, DecorationSet, EditorView, PluginValue, ViewPlugin, ViewUpdate, WidgetType } from '@codemirror/view';
 import { RangeSetBuilder } from '@codemirror/state';
@@ -11,18 +12,23 @@ import { RangeSetBuilder } from '@codemirror/state';
  * 機能:
  * - カスタム構文: ===(colorname)content===
  * - ユーザー定義カラー
+ * - 多言語対応
  */
 export default class BetterHighlightPlugin extends Plugin {
 	settings!: BetterHighlightSettings;
+	i18n!: I18n;
 
 	async onload() {
 		console.log('Better Highlight Plugin loading...');
 		
-		// プラグイン読み込み確認用のアラート
-		new Notice('Better Highlight Plugin が読み込まれました！');
-		
 		// 設定の読み込み
 		await this.loadSettings();
+		
+		// 翻訳システムの初期化
+		this.i18n = new I18n();
+		
+		// プラグイン読み込み確認用のアラート
+		new Notice(this.i18n.t('pluginLoaded'));
 
 		// CSSスタイルの追加
 		this.addStyles();
@@ -79,9 +85,9 @@ export default class BetterHighlightPlugin extends Plugin {
 		// テスト用コマンド（デバッグ用）
 		this.addCommand({
 			id: 'test-plugin',
-			name: 'プラグインテスト（動作確認用）',
+			name: this.i18n.t('testCommand'),
 			callback: () => {
-				new Notice('Better Highlight Plugin は正常に動作しています！');
+				new Notice(this.i18n.t('pluginWorking'));
 				console.log('Plugin test command executed');
 				console.log('Current settings:', this.settings);
 			}
@@ -90,7 +96,7 @@ export default class BetterHighlightPlugin extends Plugin {
 		// 基本的なハイライトコマンド
 		this.addCommand({
 			id: 'create-default-highlight',
-			name: 'デフォルトハイライトを作成',
+			name: this.i18n.t('createDefaultHighlight'),
 			editorCallback: (editor) => {
 				this.createHighlight(editor);
 			}
@@ -99,7 +105,7 @@ export default class BetterHighlightPlugin extends Plugin {
 		// ハイライト削除コマンド
 		this.addCommand({
 			id: 'remove-highlight',
-			name: 'ハイライトを削除',
+			name: this.i18n.t('removeHighlight'),
 			editorCallback: (editor) => {
 				this.removeHighlight(editor);
 			}
@@ -110,7 +116,7 @@ export default class BetterHighlightPlugin extends Plugin {
 			if (color.enabled) {
 				this.addCommand({
 					id: `highlight-${color.id}`,
-					name: `${color.displayName}ハイライトを作成`,
+					name: this.i18n.t('createColorHighlight', { color: this.getColorDisplayName(color) }),
 					editorCallback: (editor) => {
 						this.createHighlight(editor, color);
 					}
@@ -246,9 +252,9 @@ export default class BetterHighlightPlugin extends Plugin {
 			// 選択範囲を復元
 			editor.setSelection(selectionFrom, selectionTo);
 			
-			new Notice(`ハイライトを削除しました (${removedCount}個)`);
+			new Notice(this.i18n.t('highlightRemovedCount', { count: removedCount }));
 		} else {
-			new Notice('選択範囲にハイライトが見つかりませんでした');
+			new Notice(this.i18n.t('noHighlightFound'));
 		}
 	}
 
@@ -291,7 +297,7 @@ export default class BetterHighlightPlugin extends Plugin {
 				const newCursorPos = Math.max(0, cursorPos - (cursorPos > matchStart + content.length ? removedChars : 0));
 				editor.setCursor(cursor.line, newCursorPos);
 				
-				new Notice('カスタムハイライトを削除しました');
+				new Notice(this.i18n.t('customHighlightRemoved'));
 				foundHighlight = true;
 				break;
 			}
@@ -322,7 +328,7 @@ export default class BetterHighlightPlugin extends Plugin {
 					const newCursorPos = Math.max(0, cursorPos - (cursorPos > matchStart + content.length ? removedChars : 0));
 					editor.setCursor(cursor.line, newCursorPos);
 					
-					new Notice('ハイライトを削除しました');
+					new Notice(this.i18n.t('highlightRemoved'));
 					foundHighlight = true;
 					break;
 				}
@@ -330,7 +336,7 @@ export default class BetterHighlightPlugin extends Plugin {
 		}
 
 		if (!foundHighlight) {
-			new Notice('カーソル位置にハイライトが見つかりませんでした');
+			new Notice(this.i18n.t('noHighlightAtCursor'));
 		}
 	}
 
@@ -611,6 +617,22 @@ span.better-highlight-${color.id}.better-highlight-processed,
 			})
 		];
 	}
+
+	getColorDisplayName(color: HighlightColor): string {
+		// 色の名前を各言語で翻訳
+		const colorNames: Record<string, Record<string, string>> = {
+			yellow: { en: 'Yellow', ja: '黄色', 'zh-cn': '黄色', 'zh-tw': '黃色', ko: '노란색', de: 'Gelb', fr: 'Jaune', es: 'Amarillo', it: 'Giallo', ru: 'Жёлтый' },
+			blue: { en: 'Blue', ja: '青', 'zh-cn': '蓝色', 'zh-tw': '藍色', ko: '파란색', de: 'Blau', fr: 'Bleu', es: 'Azul', it: 'Blu', ru: 'Синий' },
+			green: { en: 'Green', ja: '緑', 'zh-cn': '绿色', 'zh-tw': '綠色', ko: '초록색', de: 'Grün', fr: 'Vert', es: 'Verde', it: 'Verde', ru: 'Зелёный' },
+			red: { en: 'Red', ja: '赤', 'zh-cn': '红色', 'zh-tw': '紅色', ko: '빨간색', de: 'Rot', fr: 'Rouge', es: 'Rojo', it: 'Rosso', ru: 'Красный' },
+			purple: { en: 'Purple', ja: '紫', 'zh-cn': '紫色', 'zh-tw': '紫色', ko: '보라색', de: 'Lila', fr: 'Violet', es: 'Morado', it: 'Viola', ru: 'Фиолетовый' }
+		};
+
+		const currentLang = this.i18n.getCurrentLanguage();
+		const translatedName = colorNames[color.name]?.[currentLang];
+		
+		return translatedName || color.displayName || color.name;
+	}
 }
 
 /**
@@ -628,29 +650,29 @@ class BetterHighlightSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		containerEl.createEl('h2', { text: 'Better Highlight Settings' });
+		containerEl.createEl('h2', { text: this.plugin.i18n.t('settingsTitle') });
 		
 		// デバッグ情報
 		const debugEl = containerEl.createDiv('setting-item-description');
-		debugEl.innerHTML = `<p><strong>デバッグ:</strong> 現在の色数: ${this.plugin.settings.colors.length}</p>`;
+		debugEl.innerHTML = `<p><strong>Debug:</strong> ${this.plugin.i18n.t('settingsTitle')} - ${this.plugin.settings.colors.length} colors</p>`;
 		
 		// 使用方法の説明
 		const descEl = containerEl.createDiv('setting-item-description');
 		descEl.innerHTML = `
-			<p><strong>使用方法：</strong></p>
+			<p><strong>${this.plugin.i18n.t('usageTitle')}</strong></p>
 			<ul>
-				<li>カスタムハイライト：<code>===(colorname)テキスト===</code></li>
-				<li>通常のハイライト：<code>==テキスト==</code></li>
+				<li>${this.plugin.i18n.t('usageCustom')}</li>
+				<li>${this.plugin.i18n.t('usageNormal')}</li>
 			</ul>
-			<p><strong>ホットキー：</strong> 設定 → ホットキー → "Better Highlight" で各色のショートカットを設定できます</p>
+			<p><strong>${this.plugin.i18n.t('hotkeyTitle')}</strong> ${this.plugin.i18n.t('hotkeyDesc')}</p>
 		`;
 
 		// 色追加ボタン
 		new Setting(containerEl)
-			.setName('新しい色を追加')
-			.setDesc('カスタムハイライト色を追加します')
+			.setName(this.plugin.i18n.t('addColorButton'))
+			.setDesc(this.plugin.i18n.t('addColorDesc'))
 			.addButton(button => button
-				.setButtonText('+ 色を追加')
+				.setButtonText(this.plugin.i18n.t('addColorButton'))
 				.setCta()
 				.onClick(async () => {
 					console.log('🎨 色追加ボタンがクリックされました');
@@ -658,7 +680,7 @@ class BetterHighlightSettingTab extends PluginSettingTab {
 					const newColor = {
 						id: newId,
 						name: `color${this.plugin.settings.colors.length + 1}`,
-						displayName: `カラー ${this.plugin.settings.colors.length + 1}`,
+						displayName: `Color ${this.plugin.settings.colors.length + 1}`,
 						color: '#ff9800',
 						enabled: true
 					};
@@ -685,11 +707,11 @@ class BetterHighlightSettingTab extends PluginSettingTab {
 			leftDiv.style.alignItems = 'center';
 			leftDiv.style.gap = '10px';
 			
-			const titleEl = leftDiv.createEl('h3', { text: `Color: ${color.displayName}` });
+			const titleEl = leftDiv.createEl('h3', { text: `Color: ${this.plugin.getColorDisplayName(color)}` });
 			titleEl.style.margin = '0';
 			
 			// 色プレビュー
-			const preview = leftDiv.createEl('span', { text: 'サンプルテキスト' });
+			const preview = leftDiv.createEl('span', { text: this.plugin.i18n.t('previewText') });
 			preview.style.background = `linear-gradient(to bottom, transparent 0%, transparent 60%, ${color.color} 60%, ${color.color} 100%)`;
 			preview.style.padding = '2px 8px';
 			preview.style.borderRadius = '4px';
@@ -709,7 +731,7 @@ class BetterHighlightSettingTab extends PluginSettingTab {
 				deleteButton.style.display = 'flex';
 				deleteButton.style.alignItems = 'center';
 				deleteButton.style.justifyContent = 'center';
-				deleteButton.title = 'この色を削除';
+				deleteButton.title = this.plugin.i18n.t('deleteColorTooltip');
 				
 				deleteButton.onclick = async () => {
 					if (this.plugin.settings.colors.length > 1) {
@@ -722,8 +744,8 @@ class BetterHighlightSettingTab extends PluginSettingTab {
 
 			// 有効/無効
 			new Setting(colorDiv)
-				.setName('有効')
-				.setDesc('この色を使用可能にする')
+				.setName(this.plugin.i18n.t('enabledLabel'))
+				.setDesc(this.plugin.i18n.t('enabledDesc'))
 				.addToggle(toggle => toggle
 					.setValue(color.enabled)
 					.onChange(async (value) => {
@@ -735,8 +757,8 @@ class BetterHighlightSettingTab extends PluginSettingTab {
 			if (color.enabled) {
 				// 色名
 				new Setting(colorDiv)
-					.setName('色名')
-					.setDesc('===(colorname)text=== で使用する名前')
+					.setName(this.plugin.i18n.t('colorNameLabel'))
+					.setDesc(this.plugin.i18n.t('colorNameDesc'))
 					.addText(text => text
 						.setPlaceholder('blue')
 						.setValue(color.name)
@@ -747,10 +769,10 @@ class BetterHighlightSettingTab extends PluginSettingTab {
 
 				// 表示名
 				new Setting(colorDiv)
-					.setName('表示名')
-					.setDesc('設定画面で表示される名前')
+					.setName(this.plugin.i18n.t('displayNameLabel'))
+					.setDesc(this.plugin.i18n.t('displayNameDesc'))
 					.addText(text => text
-						.setPlaceholder('青')
+						.setPlaceholder('Blue')
 						.setValue(color.displayName)
 						.onChange(async (value) => {
 							this.plugin.settings.colors[index].displayName = value;
@@ -760,8 +782,8 @@ class BetterHighlightSettingTab extends PluginSettingTab {
 
 				// カラーピッカー
 				new Setting(colorDiv)
-					.setName('ハイライト色')
-					.setDesc('ハイライトの背景色を選択')
+					.setName(this.plugin.i18n.t('colorPickerLabel'))
+					.setDesc(this.plugin.i18n.t('colorPickerDesc'))
 					.addColorPicker(colorPicker => colorPicker
 						.setValue(color.color)
 						.onChange(async (value) => {

@@ -14,7 +14,50 @@ export interface HighlightColor {
  */
 export interface BetterHighlightSettings {
 	colors: HighlightColor[];
-	defaultColorId: string;
+}
+
+/**
+ * 言語文字列のインターフェース
+ */
+export interface LanguageStrings {
+	// Plugin messages
+	pluginLoaded: string;
+	pluginWorking: string;
+	
+	// Highlight actions
+	highlightRemoved: string;
+	highlightRemovedCount: string;
+	customHighlightRemoved: string;
+	noHighlightFound: string;
+	noHighlightAtCursor: string;
+	
+	// Settings UI
+	settingsTitle: string;
+	addColorButton: string;
+	addColorDesc: string;
+	usageTitle: string;
+	usageCustom: string;
+	usageNormal: string;
+	hotkeyTitle: string;
+	hotkeyDesc: string;
+	
+	// Color settings
+	enabledLabel: string;
+	enabledDesc: string;
+	colorNameLabel: string;
+	colorNameDesc: string;
+	displayNameLabel: string;
+	displayNameDesc: string;
+	colorPickerLabel: string;
+	colorPickerDesc: string;
+	deleteColorTooltip: string;
+	previewText: string;
+	
+	// Commands
+	testCommand: string;
+	createDefaultHighlight: string;
+	removeHighlight: string;
+	createColorHighlight: string;
 }
 
 /**
@@ -25,38 +68,37 @@ export const DEFAULT_SETTINGS: BetterHighlightSettings = {
 		{
 			id: 'yellow',
 			name: 'yellow',
-			displayName: '黄色',
+			displayName: 'Yellow',
 			color: '#ffeb3b',
 			enabled: true
 		},
 		{
 			id: 'blue',
 			name: 'blue', 
-			displayName: '青',
+			displayName: 'Blue',
 			color: '#2196f3',
 			enabled: true
 		},
 		{
 			id: 'green',
 			name: 'green',
-			displayName: '緑',
+			displayName: 'Green',
 			color: '#4caf50',
 			enabled: true
 		},
 		{
 			id: 'red',
 			name: 'red',
-			displayName: '赤',
+			displayName: 'Red',
 			color: '#f44336',
 			enabled: true
 		},
 		{
 			id: 'purple',
 			name: 'purple',
-			displayName: '紫',
+			displayName: 'Purple',
 			color: '#9c27b0',
 			enabled: true
 		}
-	],
-	defaultColorId: 'yellow'
+	]
 }; 
