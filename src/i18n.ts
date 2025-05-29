@@ -57,7 +57,7 @@ const ja: LanguageStrings = {
 	removeConfirm: '本当に "{colorName}" 色を削除しますか？この操作は元に戻せません。',
 	supportSection: 'サポート',
 	buyMeACoffee: 'Buy me a coffee',
-	buyMeACoffeeDesc: 'このプラグインが役に立つと思ったら、開発をサポートすることを検討してください。'
+	buyMeACoffeeDesc: 'このプラグインを気に入っていただけましたら、開発者にコーヒーを一杯おごっていただけると嬉しいです☕'
 };
 
 // 英語翻訳
@@ -117,7 +117,7 @@ const en: LanguageStrings = {
 	removeConfirm: 'Are you sure you want to remove "{colorName}"? This operation cannot be undone.',
 	supportSection: 'Support',
 	buyMeACoffee: 'Buy me a coffee',
-	buyMeACoffeeDesc: 'If you find this plugin useful, consider supporting its development'
+	buyMeACoffeeDesc: 'Enjoying this plugin? I would really appreciate it if you could buy me a coffee to fuel future development! ☕'
 };
 
 // 中国語簡体字翻訳
@@ -177,7 +177,7 @@ const zhCN: LanguageStrings = {
 	removeConfirm: '您确定要删除"{colorName}"?此操作无法撤消',
 	supportSection: '支持',
 	buyMeACoffee: '请我喝杯咖啡',
-	buyMeACoffeeDesc: '如果您觉得这个插件有用，请考虑支持其开发'
+	buyMeACoffeeDesc: '喜欢这个插件吗？如果可以请我喝杯咖啡为未来的开发提供动力，我会非常感激的！☕'
 };
 
 // 中国语繁体字翻訳
@@ -237,7 +237,7 @@ const zhTW: LanguageStrings = {
 	removeConfirm: '您確定要刪除"{colorName}"?此操作無法撤銷',
 	supportSection: '支持',
 	buyMeACoffee: '請我喝杯咖啡',
-	buyMeACoffeeDesc: '如果您覺得這個插件有用，請考慮支持其開發'
+	buyMeACoffeeDesc: '喜歡這個外掛嗎？如果可以請我喝杯咖啡為未來的開發提供動力，我會非常感激的！☕'
 };
 
 // 韓国語翻訳
@@ -297,7 +297,7 @@ const ko: LanguageStrings = {
 	removeConfirm: '"{colorName}"을 정말로 제거하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
 	supportSection: '지원',
 	buyMeACoffee: '커피 사주기',
-	buyMeACoffeeDesc: '이 플러그인이 유용하다고 생각하면 개발을 지원하는 것을 고려해보세요'
+	buyMeACoffeeDesc: '이 플러그인이 마음에 드시나요? 앞으로의 개발에 힘이 될 수 있도록 커피 한 잔 사주시면 정말 감사하겠습니다! ☕'
 };
 
 // ドイツ語翻訳
@@ -357,7 +357,7 @@ const de: LanguageStrings = {
 	removeConfirm: 'Sind Sie sicher, dass Sie "{colorName}" entfernen möchten? Diese Aktion kann nicht rückgängig gemacht werden.',
 	supportSection: 'Unterstützung',
 	buyMeACoffee: 'Buy me a coffee',
-	buyMeACoffeeDesc: 'Wenn Ihnen dieses Plugin hilfreich ist, betrachten Sie bitte die Unterstützung seiner Entwicklung'
+	buyMeACoffeeDesc: 'Gefällt Ihnen dieses Plugin? Ich würde mich sehr freuen, wenn Sie mir einen Kaffee spendieren könnten, um die zukünftige Entwicklung zu unterstützen! ☕'
 };
 
 // フランス語翻訳
@@ -417,7 +417,7 @@ const fr: LanguageStrings = {
 	removeConfirm: 'Êtes-vous sûr de vouloir supprimer "{colorName}"? Cette opération ne peut être annulée',
 	supportSection: 'Support',
 	buyMeACoffee: 'Buy me a coffee',
-	buyMeACoffeeDesc: 'Si vous trouvez ce plugin utile, veuillez considérer de soutenir son développement'
+	buyMeACoffeeDesc: 'Vous aimez ce plugin ? J\'apprécierais vraiment si vous pouviez m\'offrir un café pour alimenter le développement futur ! ☕'
 };
 
 // スペイン語翻訳
@@ -477,7 +477,7 @@ const es: LanguageStrings = {
 	removeConfirm: '¿Está seguro de que desea eliminar "{colorName}"? Esta operación no se puede deshacer',
 	supportSection: 'Soporte',
 	buyMeACoffee: 'Buy me a coffee',
-	buyMeACoffeeDesc: 'Si encuentra este complemento útil, considere apoyar su desarrollo'
+	buyMeACoffeeDesc: '¿Te gusta este plugin? ¡Realmente apreciaría si pudieras invitarme a un café para impulsar el desarrollo futuro! ☕'
 };
 
 // イタリア語翻訳
@@ -537,7 +537,7 @@ const it: LanguageStrings = {
 	removeConfirm: 'Sei sicuro di voler rimuovere "{colorName}"? Questa operazione non può essere annullata',
 	supportSection: 'Supporto',
 	buyMeACoffee: 'Buy me a coffee',
-	buyMeACoffeeDesc: 'Se trovi questo plugin utile, considera di supportare lo sviluppo'
+	buyMeACoffeeDesc: 'Ti piace questo plugin? Apprezzerei davvero se potessi offrirmi un caffè per alimentare lo sviluppo futuro! ☕'
 };
 
 // ロシア語翻訳
@@ -597,7 +597,7 @@ const ru: LanguageStrings = {
 	removeConfirm: 'Вы уверены, что хотите удалить "{colorName}"? Это действие нельзя отменить',
 	supportSection: 'Поддержка',
 	buyMeACoffee: 'Buy me a coffee',
-	buyMeACoffeeDesc: 'Если вам этот плагин окажется полезным, подумайте о поддержке его развития'
+	buyMeACoffeeDesc: 'Нравится этот плагин? Я был бы очень признателен, если бы вы угостили меня кофе для поддержки будущей разработки! ☕'
 };
 
 // 言語データのマップ

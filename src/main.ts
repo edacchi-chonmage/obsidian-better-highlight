@@ -784,7 +784,6 @@ class BetterHighlightSettingTab extends PluginSettingTab {
 		containerEl.createEl('h3', { text: this.plugin.i18n.t('supportSection') });
 		
 		const supportSetting = new Setting(containerEl)
-			.setName(this.plugin.i18n.t('buyMeACoffee'))
 			.setDesc(this.plugin.i18n.t('buyMeACoffeeDesc'));
 		
 		// Buy me a coffeeボタンを追加
