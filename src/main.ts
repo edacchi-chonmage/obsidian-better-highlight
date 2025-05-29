@@ -262,6 +262,21 @@ mark, .cm-highlight {
 	text-decoration: none !important;
 }
 
+/* 設定画面のスタイル */
+.better-highlight-color-setting {
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	padding: 16px;
+	margin-bottom: 16px;
+	background: var(--background-secondary);
+}
+
+.color-setting-header {
+	margin-bottom: 12px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
 `;
 
 		// 各色のCSSルールを生成 - markタグと同じスタイル
@@ -472,7 +487,21 @@ class BetterHighlightSettingTab extends PluginSettingTab {
 		this.plugin.settings.colors.forEach((color, index) => {
 			const colorDiv = containerEl.createDiv('better-highlight-color-setting');
 			
-			colorDiv.createEl('h3', { text: `Color: ${color.displayName}` });
+			// 色プレビューを含むヘッダー
+			const headerDiv = colorDiv.createDiv('color-setting-header');
+			headerDiv.style.display = 'flex';
+			headerDiv.style.alignItems = 'center';
+			headerDiv.style.gap = '10px';
+			
+			const titleEl = headerDiv.createEl('h3', { text: `Color: ${color.displayName}` });
+			titleEl.style.margin = '0';
+			
+			// 色プレビュー
+			const preview = headerDiv.createEl('span', { text: 'サンプルテキスト' });
+			preview.style.background = `linear-gradient(to bottom, transparent 0%, transparent 60%, ${color.color} 60%, ${color.color} 100%)`;
+			preview.style.padding = '2px 8px';
+			preview.style.borderRadius = '4px';
+			preview.style.fontSize = '12px';
 
 			// 有効/無効
 			new Setting(colorDiv)
@@ -509,18 +538,20 @@ class BetterHighlightSettingTab extends PluginSettingTab {
 						.onChange(async (value) => {
 							this.plugin.settings.colors[index].displayName = value;
 							await this.plugin.saveSettings();
+							this.display(); // ヘッダーの表示名を更新するため再描画
 						}));
 
-				// カラーコード
+				// カラーピッカー
 				new Setting(colorDiv)
-					.setName('カラーコード')
-					.setDesc('ハイライトの背景色')
-					.addText(text => text
-						.setPlaceholder('#2196f3')
+					.setName('ハイライト色')
+					.setDesc('ハイライトの背景色を選択')
+					.addColorPicker(colorPicker => colorPicker
 						.setValue(color.color)
 						.onChange(async (value) => {
 							this.plugin.settings.colors[index].color = value;
 							await this.plugin.saveSettings();
+							// プレビューを即座に更新
+							preview.style.background = `linear-gradient(to bottom, transparent 0%, transparent 60%, ${value} 60%, ${value} 100%)`;
 						}));
 			}
 		});
