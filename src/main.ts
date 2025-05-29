@@ -382,8 +382,7 @@ mark, .cm-highlight {
 
 .color-setting-header {
 	margin-bottom: 12px;
-	padding-bottom: 8px;
-	border-bottom: 1px solid var(--background-modifier-border);
+	padding-bottom: 0px;
 }
 
 `;
@@ -712,7 +711,7 @@ class BetterHighlightSettingTab extends PluginSettingTab {
 			
 			// 色プレビュー
 			const preview = leftDiv.createEl('span', { text: this.plugin.i18n.t('previewText') });
-			preview.style.background = `linear-gradient(to bottom, transparent 0%, transparent 60%, ${color.color} 60%, ${color.color} 100%)`;
+			preview.className = `better-highlight-${color.id}`;
 			preview.style.padding = '2px 8px';
 			preview.style.borderRadius = '4px';
 			preview.style.fontSize = '12px';
@@ -789,8 +788,8 @@ class BetterHighlightSettingTab extends PluginSettingTab {
 						.onChange(async (value) => {
 							this.plugin.settings.colors[index].color = value;
 							await this.plugin.saveSettings();
-							// プレビューを即座に更新
-							preview.style.background = `linear-gradient(to bottom, transparent 0%, transparent 60%, ${value} 60%, ${value} 100%)`;
+							// CSSが再生成されるので、プレビューも自動更新される
+							this.display(); // 再描画でプレビューも更新
 						}));
 			}
 		});
