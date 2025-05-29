@@ -1,0 +1,25 @@
+{
+  "colors": [
+    {
+      "id": "purple",
+      "name": "important",
+      "displayName": "重要",
+      "color": "#ffd6d6",
+      "enabled": true
+    },
+    {
+      "id": "color-1748536029194",
+      "name": "learn",
+      "displayName": "学び",
+      "color": "#d6d1ff",
+      "enabled": true
+    },
+    {
+      "id": "color-1748536056993",
+      "name": "question",
+      "displayName": "疑問",
+      "color": "#fff3a8",
+      "enabled": true
+    }
+  ]
+}

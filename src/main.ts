@@ -19,8 +19,6 @@ export default class BetterHighlightPlugin extends Plugin {
 	i18n!: I18n;
 
 	async onload() {
-		console.log('Better Highlight Plugin loading...');
-		
 		// 設定の読み込み
 		await this.loadSettings();
 		
@@ -44,12 +42,9 @@ export default class BetterHighlightPlugin extends Plugin {
 
 		// 設定タブの追加
 		this.addSettingTab(new BetterHighlightSettingTab(this.app, this));
-
-		console.log('Better Highlight Plugin loaded successfully!');
 	}
 
 	onunload() {
-		console.log('Better Highlight Plugin unloading...');
 		// スタイルの削除
 		const existingStyle = document.getElementById('better-highlight-styles');
 		if (existingStyle) {
@@ -147,8 +142,6 @@ export default class BetterHighlightPlugin extends Plugin {
 		const selectionFrom = editor.getCursor('from');
 		const selectionTo = editor.getCursor('to');
 		
-		console.log(`Selection from line ${selectionFrom.line} ch ${selectionFrom.ch} to line ${selectionTo.line} ch ${selectionTo.ch}`);
-		
 		let foundHighlight = false;
 		let removedCount = 0;
 		
@@ -159,13 +152,10 @@ export default class BetterHighlightPlugin extends Plugin {
 		// 選択範囲に関わる全ての行を処理
 		for (let lineNum = selectionFrom.line; lineNum <= selectionTo.line; lineNum++) {
 			const line = lines[lineNum];
-			console.log(`Processing line ${lineNum}: "${line}"`);
 			
 			// 選択範囲がこの行のどの部分に該当するかを計算
 			const lineSelectionStart = lineNum === selectionFrom.line ? selectionFrom.ch : 0;
 			const lineSelectionEnd = lineNum === selectionTo.line ? selectionTo.ch : line.length;
-			
-			console.log(`Line ${lineNum} selection range: ${lineSelectionStart}-${lineSelectionEnd}`);
 			
 			// カスタムハイライト構文を検索
 			const customHighlightRegex = /==\([^)]+\)([^=]+)==/g;
@@ -181,13 +171,10 @@ export default class BetterHighlightPlugin extends Plugin {
 				const matchStart = match.index;
 				const matchEnd = match.index + match[0].length;
 				
-				console.log(`Found custom highlight: "${match[0]}" at ${matchStart}-${matchEnd}`);
-				
 				// 選択範囲とハイライトが重複するかチェック
 				const overlaps = !(lineSelectionEnd <= matchStart || lineSelectionStart >= matchEnd);
 				
 				if (overlaps) {
-					console.log(`Selection overlaps with custom highlight, removing...`);
 					const content = match[1]; // 抽出されたコンテンツ
 					const beforeMatch = newLine.substring(0, matchStart);
 					const afterMatch = newLine.substring(matchEnd);
@@ -206,13 +193,10 @@ export default class BetterHighlightPlugin extends Plugin {
 					const matchStart = match.index;
 					const matchEnd = match.index + match[0].length;
 					
-					console.log(`Found normal highlight: "${match[0]}" at ${matchStart}-${matchEnd}`);
-					
 					// 選択範囲とハイライトが重複するかチェック
 					const overlaps = !(lineSelectionEnd <= matchStart || lineSelectionStart >= matchEnd);
 					
 					if (overlaps) {
-						console.log(`Selection overlaps with normal highlight, removing...`);
 						const content = match[1]; // 抽出されたコンテンツ
 						const beforeMatch = newLine.substring(0, matchStart);
 						const afterMatch = newLine.substring(matchEnd);
@@ -250,9 +234,6 @@ export default class BetterHighlightPlugin extends Plugin {
 		const line = editor.getLine(cursor.line);
 		const cursorPos = cursor.ch;
 
-		console.log(`Cursor at line ${cursor.line}, position ${cursorPos}`);
-		console.log(`Line content: "${line}"`);
-
 		// カーソル位置周辺のハイライト構文を検索
 		const customHighlightRegex = /==\([^)]+\)([^=]+)==/g;
 		const normalHighlightRegex = /==([^=]+)==/g;
@@ -266,10 +247,7 @@ export default class BetterHighlightPlugin extends Plugin {
 			const matchStart = match.index;
 			const matchEnd = match.index + match[0].length;
 			
-			console.log(`Found custom highlight: "${match[0]}" at ${matchStart}-${matchEnd}`);
-			
 			if (cursorPos >= matchStart && cursorPos <= matchEnd) {
-				console.log('Cursor is inside custom highlight, removing...');
 				const beforeMatch = line.substring(0, matchStart);
 				const afterMatch = line.substring(matchEnd);
 				const content = match[1]; // 抽出されたコンテンツ
@@ -297,10 +275,7 @@ export default class BetterHighlightPlugin extends Plugin {
 				const matchStart = match.index;
 				const matchEnd = match.index + match[0].length;
 				
-				console.log(`Found normal highlight: "${match[0]}" at ${matchStart}-${matchEnd}`);
-				
 				if (cursorPos >= matchStart && cursorPos <= matchEnd) {
-					console.log('Cursor is inside normal highlight, removing...');
 					const beforeMatch = line.substring(0, matchStart);
 					const afterMatch = line.substring(matchEnd);
 					const content = match[1]; // 抽出されたコンテンツ
@@ -464,89 +439,139 @@ span.better-highlight-${color.id}.better-highlight-processed,
 
 		css += `
 }
+
+/* PDF Viewer Support - for Obsidian PDF embeds and native PDF viewer */
+.pdf-embed .better-highlight-processed,
+.pdf-viewer .better-highlight-processed,
+[data-type="pdf"] .better-highlight-processed {
+	-webkit-print-color-adjust: exact !important;
+	print-color-adjust: exact !important;
+}
 `;
+
+		// 各色のPDFビューア用CSSルールを生成
+		this.settings.colors.forEach((color) => {
+			if (color.enabled) {
+				css += `
+/* ${color.displayName}ハイライト - PDFビューア対応 */
+.pdf-embed span.better-highlight-${color.id}.better-highlight-processed,
+.pdf-embed .better-highlight-${color.id},
+.pdf-viewer span.better-highlight-${color.id}.better-highlight-processed,
+.pdf-viewer .better-highlight-${color.id},
+[data-type="pdf"] span.better-highlight-${color.id}.better-highlight-processed,
+[data-type="pdf"] .better-highlight-${color.id} {
+	background: linear-gradient(to bottom, transparent 0%, transparent 60%, ${color.color} 60%, ${color.color} 100%) !important;
+	color: inherit !important;
+	-webkit-print-color-adjust: exact !important;
+	print-color-adjust: exact !important;
+}
+`;
+			}
+		});
 
 		style.textContent = css;
 		document.head.appendChild(style);
-		
-		console.log('CSS styles added with PDF export support:', css);
 	}
 
 	private setupMarkdownPostProcessor() {
-		console.log('Setting up MarkdownPostProcessor...');
-		
 		this.registerMarkdownPostProcessor((element, context) => {
-			console.log('=== MarkdownPostProcessor called ===');
-			console.log('Processing element:', element);
-			console.log('Element tagName:', element.tagName);
-			console.log('Element textContent:', element.textContent);
-			console.log('Element innerHTML:', element.innerHTML);
-			
-			// より積極的にMarkdownPostProcessorの動作を確認
-			if (element.textContent) {
-				console.log('🔍 Processing element with content:', element.textContent.substring(0, 100));
-			}
-			
 			// シンプルなアプローチ：innerHTML全体を処理
 			this.processElementForReading(element);
 		});
-		
-		console.log('MarkdownPostProcessor registered successfully');
 	}
 
 	private processElementForReading(element: HTMLElement) {
-		console.log('🔄 Processing element for reading view');
+		// PDF環境の検出
+		const isPdfContext = element.closest('.pdf-embed') !== null || 
+							 element.closest('.pdf-viewer') !== null ||
+							 element.closest('[data-type="pdf"]') !== null ||
+							 document.body.classList.contains('pdf-view');
 		
-		// innerHTML全体をチェック
+		// 直接mark要素を検索して処理
+		const markElements = element.querySelectorAll('mark');
+		
+		markElements.forEach((markElement) => {
+			const text = markElement.textContent || '';
+			
+			// (colorname)content形式をチェック
+			const match = text.match(/^\(([^)]+)\)(.+)$/);
+			if (match) {
+				const colorName = match[1];
+				const content = match[2];
+				
+				const color = this.settings.colors.find(c => c.name === colorName);
+				
+				if (color && color.enabled) {
+					// mark要素を新しいspan要素に置換
+					const newSpan = document.createElement('span');
+					newSpan.className = `better-highlight-${color.id} better-highlight-processed`;
+					
+					// PDF環境では追加のスタイルを適用
+					const additionalStyles = isPdfContext ? 
+						'; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important' : '';
+					
+					newSpan.style.cssText = `background: linear-gradient(to bottom, transparent 0%, transparent 60%, ${color.color} 60%, ${color.color} 100%) !important${additionalStyles}`;
+					newSpan.textContent = content;
+					
+					// 親要素で置換
+					markElement.parentElement?.replaceChild(newSpan, markElement);
+				} else {
+					// 未知の色の場合はデフォルトスタイルを適用
+					markElement.style.cssText = `background: linear-gradient(to bottom, transparent 0%, transparent 60%, #ffeb3b 60%, #ffeb3b 100%) !important`;
+					markElement.textContent = content;
+				}
+			}
+		});
+		
+		// 元のHTML処理も念のため保持（既に処理されていない要素用）
 		let html = element.innerHTML;
-		console.log('Original HTML:', html);
 		
 		// Obsidianによって変換された形式を処理: <mark>=(colorname)content</mark>=
 		const obsidianConvertedRegex = /<mark>=\(([^)]+)\)([^<]+)<\/mark>=/g;
 		let hasChanges = false;
 		
 		html = html.replace(obsidianConvertedRegex, (match, colorName, content) => {
-			console.log(`🎯 Found Obsidian-converted syntax in reading view: ${match}`);
-			console.log(`Color: ${colorName}, Content: ${content}`);
-			
 			const color = this.settings.colors.find(c => c.name === colorName);
 			
 			if (color && color.enabled) {
-				console.log(`✅ Applying color ${colorName} to content: ${content}`);
 				hasChanges = true;
-				return `<span class="better-highlight-${color.id} better-highlight-processed">${content}</span>`;
+				
+				// PDF環境では追加のスタイルを適用
+				const additionalStyles = isPdfContext ? 
+					'; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important' : '';
+				
+				return `<span class="better-highlight-${color.id} better-highlight-processed" style="background: linear-gradient(to bottom, transparent 0%, transparent 60%, ${color.color} 60%, ${color.color} 100%) !important${additionalStyles}">${content}</span>`;
 			} else {
-				console.log(`❌ Unknown color ${colorName}, using default`);
 				hasChanges = true;
-				return `<span style="background: linear-gradient(to bottom, transparent 0%, transparent 60%, #ffeb3b 60%, #ffeb3b 100%);">${content}</span>`;
+				const additionalStyles = isPdfContext ? 
+					'; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important' : '';
+				return `<span style="background: linear-gradient(to bottom, transparent 0%, transparent 60%, #ffeb3b 60%, #ffeb3b 100%) !important${additionalStyles}">${content}</span>`;
 			}
 		});
 		
 		// 元の構文も念のためチェック（万が一直接含まれている場合）
 		const originalRegex = /==\(([^)]+)\)([^=]+)==/g;
 		html = html.replace(originalRegex, (match, colorName, content) => {
-			console.log(`🎯 Found original syntax in reading view: ${match}`);
-			console.log(`Color: ${colorName}, Content: ${content}`);
-			
 			const color = this.settings.colors.find(c => c.name === colorName);
 			
 			if (color && color.enabled) {
-				console.log(`✅ Applying color ${colorName} to content: ${content}`);
 				hasChanges = true;
-				return `<span class="better-highlight-${color.id} better-highlight-processed">${content}</span>`;
+				
+				// PDF環境では追加のスタイルを適用
+				const additionalStyles = isPdfContext ? 
+					'; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important' : '';
+				
+				return `<span class="better-highlight-${color.id} better-highlight-processed" style="background: linear-gradient(to bottom, transparent 0%, transparent 60%, ${color.color} 60%, ${color.color} 100%) !important${additionalStyles}">${content}</span>`;
 			} else {
-				console.log(`❌ Unknown color ${colorName}, using default`);
 				hasChanges = true;
-				return `<span style="background: linear-gradient(to bottom, transparent 0%, transparent 60%, #ffeb3b 60%, #ffeb3b 100%);">${content}</span>`;
+				const additionalStyles = isPdfContext ? 
+					'; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important' : '';
+				return `<span style="background: linear-gradient(to bottom, transparent 0%, transparent 60%, #ffeb3b 60%, #ffeb3b 100%) !important${additionalStyles}">${content}</span>`;
 			}
 		});
 		
 		if (hasChanges) {
-			console.log('🎉 Updating element HTML in reading view');
-			console.log('New HTML:', html);
 			element.innerHTML = html;
-		} else {
-			console.log('No changes needed for this element');
 		}
 	}
 
@@ -595,9 +620,6 @@ span.better-highlight-${color.id}.better-highlight-processed,
 					const hasSelection = selectionFrom !== selectionTo;
 					const isDragging = (view as any)._betterHighlightDragging || false;
 					
-					console.log('🔍 Building decorations for editor text');
-					console.log(`Cursor: ${cursorPos}, Selection: ${selectionFrom}-${selectionTo}, Has selection: ${hasSelection}, Dragging: ${isDragging}`);
-					
 					// カスタムハイライト構文を検索
 					const regex = /==\(([^)]+)\)([^=]+)==/g;
 					let match;
@@ -608,8 +630,6 @@ span.better-highlight-${color.id}.better-highlight-processed,
 						const fullMatch = match[0];
 						const from = match.index;
 						const to = match.index + fullMatch.length;
-						
-						console.log(`Found custom syntax: ${fullMatch} at ${from}-${to}`);
 						
 						const color = plugin.settings.colors.find(c => c.name === colorName);
 						
@@ -623,20 +643,14 @@ span.better-highlight-${color.id}.better-highlight-processed,
 							// ドラッグ中は構文表示を完全に無効にする
 							const shouldShowSyntax = !isDragging && (cursorInRange || selectionOverlaps);
 							
-							console.log(`Range ${from}-${to}: cursor=${cursorPos}, selection=${selectionFrom}-${selectionTo}, cursorInRange=${cursorInRange}, selectionOverlaps=${selectionOverlaps}, shouldShowSyntax=${shouldShowSyntax}, isDragging=${isDragging}`);
-							
 							if (shouldShowSyntax) {
 								// カーソルが範囲内または選択範囲が重複する場合：構文全体を表示しつつハイライト効果も適用
-								console.log(`Cursor in range or selection overlaps ${from}-${to}, showing syntax with highlight`);
-								
 								// 構文全体にハイライト効果を適用
 								builder.add(from, to, Decoration.mark({
 									class: `better-highlight-${color.id}`,
 								}));
 							} else {
 								// カーソルが範囲外かつ選択範囲が重複しない場合：マークアップを隠してコンテンツのみ表示
-								console.log(`Cursor outside range and no selection overlap ${from}-${to}, hiding markup`);
-								
 								// 開始マークアップの位置を計算
 								const openMarkupStart = from;
 								const openMarkupEnd = from + `==(${colorName})`.length;
@@ -660,8 +674,6 @@ span.better-highlight-${color.id}.better-highlight-processed,
 								// 終了マークアップを隠す
 								builder.add(closeMarkupStart, closeMarkupEnd, Decoration.replace({}));
 							}
-							
-							console.log(`Applied decorations for ${colorName}`);
 						}
 					}
 					
