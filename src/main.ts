@@ -1,5 +1,8 @@
 import { Plugin, PluginSettingTab, Setting, App, Editor, MarkdownView, Modifier, Notice } from 'obsidian';
 import { BetterHighlightSettings, HighlightColor, DEFAULT_SETTINGS } from './types';
+import { Extension } from '@codemirror/state';
+import { Decoration, DecorationSet, EditorView, PluginValue, ViewPlugin, ViewUpdate } from '@codemirror/view';
+import { RangeSetBuilder } from '@codemirror/state';
 
 /**
  * Better Highlight Plugin
@@ -24,7 +27,10 @@ export default class BetterHighlightPlugin extends Plugin {
 		// CSSスタイルの追加
 		this.addStyles();
 
-		// Markdown post processorの登録
+		// エディター拡張の登録（ライブプレビュー用）
+		this.registerEditorExtension(this.createEditorExtension());
+
+		// Markdown post processorの登録（リーディングビュー用）
 		this.setupMarkdownPostProcessor();
 
 		// コマンドの登録
@@ -282,13 +288,60 @@ mark, .cm-highlight {
 		this.registerMarkdownPostProcessor((element, context) => {
 			console.log('=== MarkdownPostProcessor called ===');
 			console.log('Processing element:', element);
-			console.log('Element content:', element.textContent);
+			console.log('Element tagName:', element.tagName);
+			console.log('Element textContent:', element.textContent);
+			console.log('Element innerHTML:', element.innerHTML);
+			console.log('Element outerHTML:', element.outerHTML);
+			console.log('Context:', context);
+			
+			// 実際にカスタム構文が含まれているかをチェック
+			const hasCustomSyntax = element.textContent?.includes('===') || false;
+			console.log('Has === in textContent:', hasCustomSyntax);
+			
+			if (hasCustomSyntax) {
+				console.log('🔍 Found === in content, analyzing...');
+				console.log('Full textContent:', JSON.stringify(element.textContent));
+				
+				// 全ての子ノードを分析
+				this.analyzeAllNodes(element, 0);
+			}
 			
 			// 再帰的にすべてのノードを処理
 			this.processNode(element);
 		});
 		
 		console.log('MarkdownPostProcessor registered successfully');
+	}
+
+	private analyzeAllNodes(node: Node, depth: number) {
+		const indent = '  '.repeat(depth);
+		console.log(`${indent}Node Type: ${node.nodeType} (${this.getNodeTypeName(node.nodeType)})`);
+		console.log(`${indent}Node Content: "${node.textContent}"`);
+		
+		if (node.nodeType === Node.ELEMENT_NODE) {
+			const element = node as Element;
+			console.log(`${indent}Element tagName: ${element.tagName}`);
+			console.log(`${indent}Element className: ${element.className}`);
+			console.log(`${indent}Element innerHTML: ${element.innerHTML}`);
+		}
+		
+		// 子ノードを再帰的に分析
+		node.childNodes.forEach((child, index) => {
+			console.log(`${indent}Child ${index}:`);
+			this.analyzeAllNodes(child, depth + 1);
+		});
+	}
+
+	private getNodeTypeName(nodeType: number): string {
+		switch (nodeType) {
+			case Node.ELEMENT_NODE: return 'ELEMENT';
+			case Node.TEXT_NODE: return 'TEXT';
+			case Node.COMMENT_NODE: return 'COMMENT';
+			case Node.DOCUMENT_NODE: return 'DOCUMENT';
+			case Node.DOCUMENT_TYPE_NODE: return 'DOCTYPE';
+			case Node.DOCUMENT_FRAGMENT_NODE: return 'FRAGMENT';
+			default: return 'UNKNOWN';
+		}
 	}
 
 	private processNode(node: Node) {
@@ -385,6 +438,59 @@ mark, .cm-highlight {
 		const brightness = (r * 299 + g * 587 + b * 114) / 1000;
 		
 		return brightness > 128 ? '#000000' : '#ffffff';
+	}
+
+	private createEditorExtension(): Extension {
+		const plugin = this;
+		return ViewPlugin.fromClass(class implements PluginValue {
+			decorations: DecorationSet;
+
+			constructor(view: EditorView) {
+				this.decorations = this.buildDecorations(view);
+			}
+
+			update(update: ViewUpdate) {
+				if (update.docChanged || update.viewportChanged) {
+					this.decorations = this.buildDecorations(update.view);
+				}
+			}
+
+			buildDecorations(view: EditorView): DecorationSet {
+				const builder = new RangeSetBuilder<Decoration>();
+				const text = view.state.doc.toString();
+				
+				console.log('🔍 Building decorations for editor text');
+				
+				// カスタムハイライト構文を検索
+				const regex = /===\(([^)]+)\)([^=]+)===/g;
+				let match;
+				
+				while ((match = regex.exec(text)) !== null) {
+					const colorName = match[1];
+					const content = match[2];
+					const from = match.index;
+					const to = match.index + match[0].length;
+					
+					console.log(`Found custom syntax in editor: ${match[0]}, color: ${colorName}, content: ${content}`);
+					
+					const color = plugin.settings.colors.find(c => c.name === colorName);
+					
+					if (color && color.enabled) {
+						console.log(`Creating decoration for ${colorName} at ${from}-${to}`);
+						
+						const decoration = Decoration.mark({
+							class: `better-highlight-${color.id} better-highlight-processed`
+						});
+						
+						builder.add(from, to, decoration);
+					}
+				}
+				
+				return builder.finish();
+			}
+		}, {
+			decorations: (plugin) => plugin.decorations
+		});
 	}
 }
 

@@ -1,8 +1,11 @@
 # Better Highlight Plugin デバッグテスト
 
-## 基本テスト
-まずは最もシンプルなケースから：
+## 基本テスト（===なし）
+これは通常のテキストです。MarkdownPostProcessorが呼ばれるかテスト。
 
+normal text for testing processor
+
+## 旧構文テスト
 ===(blue)青いテキスト===
 
 ## 複数テスト
