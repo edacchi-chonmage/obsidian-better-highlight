@@ -1,16 +1,16 @@
 # Better Highlight Plugin for Obsidian
 
-An enhanced Markdown highlighting plugin for Obsidian that adds custom color support and multi-language interface.
+Enhanced Markdown highlighting for Obsidian with custom colors.
 
 ## Features
 
 - **Custom Color Highlights**: Use `===(colorname)text===` syntax for custom colored highlights
 - **Standard Highlights**: Regular `==text==` highlighting still works
-- **Multi-Language Support**: Auto-detects Obsidian language (10 languages supported)
 - **Configurable Colors**: Add, remove, and customize highlight colors
 - **Hotkey Support**: Set keyboard shortcuts for each color
 - **Live Preview**: Real-time highlight rendering in editor
 - **Reading View**: Full support for custom highlights in reading mode
+- **Multi-Language Support**: Auto-detects Obsidian language (10 languages supported)
 
 ## Supported Languages
 

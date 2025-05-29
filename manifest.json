@@ -3,7 +3,7 @@
   "name": "Better Highlight",
   "version": "0.1.0",
   "minAppVersion": "1.4.0",
-  "description": "Enhanced Markdown highlighting with custom colors and multi-language support. Features configurable color palette, hotkey shortcuts, and seamless live preview integration.",
+  "description": "Enhanced Markdown highlighting for Obsidian with custom colors",
   "author": "edacchi_chonmage",
   "authorUrl": "https://github.com/edacchi_chonmage",
   "fundingUrl": "https://www.buymeacoffee.com/edacchi_chonmage",
