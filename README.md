@@ -106,21 +106,29 @@ Contributions are welcome! Please feel free to submit issues and pull requests.
 
 ## Changelog
 
-### Version 1.0.0 (Initial Release)
-- ✨ **NEW**: Custom color highlights with `==(colorname)text==` syntax
-- ✨ **NEW**: Standard `==text==` highlighting support
-- ✨ **NEW**: Configurable color palette (add, remove, customize colors)
-- ✨ **NEW**: Hotkey support for all highlight colors
-- ✨ **NEW**: Live preview in editor with real-time rendering
-- ✨ **NEW**: Full reading view support
-- ✨ **NEW**: Multi-language support (10 languages)
-- ✨ **NEW**: Intelligent highlight removal (selection and cursor-based)
-- ✨ **NEW**: Native Obsidian UI integration
-- 🔧 **BREAKING**: Uses `==` syntax for consistency with Obsidian native highlights
+### Version 1.0.0 - Initial Release
 
-### Latest Features
+This is the first stable release of Better Highlight Plugin featuring:
+
+#### Core Features
+- Custom color highlights with `==(colorname)text==` syntax
+- Standard `==text==` highlighting support  
+- Configurable color palette (add, remove, customize colors)
+- Hotkey support for all highlight colors
+- Live preview in editor with real-time rendering
+- Full reading view support
+
+#### Internationalization
+- Multi-language support (10 languages)
 - Auto-detection of Obsidian language
-- Support for 10 languages
-- Improved highlight removal (partial selection support)
+
+#### User Experience
+- Intelligent highlight removal (selection and cursor-based)
+- Native Obsidian UI integration
+- Enhanced selection behavior matching native Obsidian highlights
 - Single undo operation for multiple highlight removals
-- Enhanced selection behavior matching native Obsidian highlights 
+
+#### Technical
+- Uses `==` syntax for consistency with Obsidian native highlights
+- Built with TypeScript and CodeMirror 6
+- Optimized for performance and reliability 
