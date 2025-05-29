@@ -58,9 +58,24 @@ export default class BetterHighlightPlugin extends Plugin {
 	async saveSettings() {
 		await this.saveData(this.settings);
 		this.addStyles(); // 設定変更時にスタイルを更新
+		this.registerCommands(); // コマンドを再登録
 	}
 
 	private registerCommands() {
+		// 既存のコマンドをクリア（再登録時の重複を防ぐ）
+		// @ts-ignore
+		this.app.commands.removeCommand(`${this.manifest.id}:test-plugin`);
+		// @ts-ignore
+		this.app.commands.removeCommand(`${this.manifest.id}:create-default-highlight`);
+		// @ts-ignore
+		this.app.commands.removeCommand(`${this.manifest.id}:remove-highlight`);
+		
+		// 既存の色コマンドをクリア
+		this.settings.colors.forEach((color) => {
+			// @ts-ignore
+			this.app.commands.removeCommand(`${this.manifest.id}:highlight-${color.id}`);
+		});
+
 		// テスト用コマンド（デバッグ用）
 		this.addCommand({
 			id: 'test-plugin',
@@ -472,6 +487,10 @@ class BetterHighlightSettingTab extends PluginSettingTab {
 
 		containerEl.createEl('h2', { text: 'Better Highlight Settings' });
 		
+		// デバッグ情報
+		const debugEl = containerEl.createDiv('setting-item-description');
+		debugEl.innerHTML = `<p><strong>デバッグ:</strong> 現在の色数: ${this.plugin.settings.colors.length}</p>`;
+		
 		// 使用方法の説明
 		const descEl = containerEl.createDiv('setting-item-description');
 		descEl.innerHTML = `
@@ -483,6 +502,30 @@ class BetterHighlightSettingTab extends PluginSettingTab {
 			<p><strong>ホットキー：</strong> 設定 → ホットキー → "Better Highlight" で各色のショートカットを設定できます</p>
 		`;
 
+		// 色追加ボタン
+		new Setting(containerEl)
+			.setName('新しい色を追加')
+			.setDesc('カスタムハイライト色を追加します')
+			.addButton(button => button
+				.setButtonText('+ 色を追加')
+				.setCta()
+				.onClick(async () => {
+					console.log('🎨 色追加ボタンがクリックされました');
+					const newId = `color-${Date.now()}`;
+					const newColor = {
+						id: newId,
+						name: `color${this.plugin.settings.colors.length + 1}`,
+						displayName: `カラー ${this.plugin.settings.colors.length + 1}`,
+						color: '#ff9800',
+						enabled: true
+					};
+					console.log('新しい色を追加:', newColor);
+					this.plugin.settings.colors.push(newColor);
+					await this.plugin.saveSettings();
+					console.log('設定保存完了、再描画します');
+					this.display(); // 再描画
+				}));
+
 		// 各色の設定
 		this.plugin.settings.colors.forEach((color, index) => {
 			const colorDiv = containerEl.createDiv('better-highlight-color-setting');
@@ -492,16 +535,47 @@ class BetterHighlightSettingTab extends PluginSettingTab {
 			headerDiv.style.display = 'flex';
 			headerDiv.style.alignItems = 'center';
 			headerDiv.style.gap = '10px';
+			headerDiv.style.justifyContent = 'space-between';
 			
-			const titleEl = headerDiv.createEl('h3', { text: `Color: ${color.displayName}` });
+			const leftDiv = headerDiv.createDiv();
+			leftDiv.style.display = 'flex';
+			leftDiv.style.alignItems = 'center';
+			leftDiv.style.gap = '10px';
+			
+			const titleEl = leftDiv.createEl('h3', { text: `Color: ${color.displayName}` });
 			titleEl.style.margin = '0';
 			
 			// 色プレビュー
-			const preview = headerDiv.createEl('span', { text: 'サンプルテキスト' });
+			const preview = leftDiv.createEl('span', { text: 'サンプルテキスト' });
 			preview.style.background = `linear-gradient(to bottom, transparent 0%, transparent 60%, ${color.color} 60%, ${color.color} 100%)`;
 			preview.style.padding = '2px 8px';
 			preview.style.borderRadius = '4px';
 			preview.style.fontSize = '12px';
+
+			// 削除ボタン（色が1つ以上ある場合のみ表示）
+			if (this.plugin.settings.colors.length > 1) {
+				const deleteButton = headerDiv.createEl('button', { text: '×' });
+				deleteButton.style.background = 'var(--color-red)';
+				deleteButton.style.color = 'white';
+				deleteButton.style.border = 'none';
+				deleteButton.style.borderRadius = '50%';
+				deleteButton.style.width = '24px';
+				deleteButton.style.height = '24px';
+				deleteButton.style.cursor = 'pointer';
+				deleteButton.style.fontSize = '16px';
+				deleteButton.style.display = 'flex';
+				deleteButton.style.alignItems = 'center';
+				deleteButton.style.justifyContent = 'center';
+				deleteButton.title = 'この色を削除';
+				
+				deleteButton.onclick = async () => {
+					if (this.plugin.settings.colors.length > 1) {
+						this.plugin.settings.colors.splice(index, 1);
+						await this.plugin.saveSettings();
+						this.display(); // 再描画
+					}
+				};
+			}
 
 			// 有効/無効
 			new Setting(colorDiv)
