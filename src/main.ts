@@ -1,7 +1,7 @@
 import { Plugin, PluginSettingTab, Setting, App, Editor, MarkdownView, Modifier, Notice } from 'obsidian';
 import { BetterHighlightSettings, HighlightColor, DEFAULT_SETTINGS } from './types';
 import { Extension } from '@codemirror/state';
-import { Decoration, DecorationSet, EditorView, PluginValue, ViewPlugin, ViewUpdate } from '@codemirror/view';
+import { Decoration, DecorationSet, EditorView, PluginValue, ViewPlugin, ViewUpdate, WidgetType } from '@codemirror/view';
 import { RangeSetBuilder } from '@codemirror/state';
 
 /**
@@ -478,11 +478,26 @@ mark, .cm-highlight {
 					if (color && color.enabled) {
 						console.log(`Creating decoration for ${colorName} at ${from}-${to}`);
 						
-						const decoration = Decoration.mark({
-							class: `better-highlight-${color.id} better-highlight-processed`
+						// カスタムWidget型を作成
+						class HighlightWidget extends WidgetType {
+							constructor(private content: string, private className: string) {
+								super();
+							}
+							
+							toDOM() {
+								const span = document.createElement('span');
+								span.textContent = this.content;
+								span.className = this.className;
+								return span;
+							}
+						}
+						
+						// 元の構文を完全に置換
+						const replacement = Decoration.replace({
+							widget: new HighlightWidget(content, `better-highlight-${color.id} better-highlight-processed`)
 						});
 						
-						builder.add(from, to, decoration);
+						builder.add(from, to, replacement);
 					}
 				}
 				
