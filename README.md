@@ -1,6 +1,6 @@
-# Better Highlight Plugin for Obsidian
+# Better Highlight Plugin
 
-Enhanced Markdown highlighting for Obsidian with custom colors.
+Enhanced Markdown highlighting with custom colors.
 
 ## Features
 

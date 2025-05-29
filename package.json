@@ -1,7 +1,7 @@
 {
   "name": "better-highlight",
   "version": "1.0.0",
-  "description": "Enhanced Markdown highlighting for Obsidian with custom colors",
+  "description": "Enhanced Markdown highlighting with custom colors",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
