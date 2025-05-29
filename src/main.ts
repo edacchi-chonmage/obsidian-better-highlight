@@ -426,10 +426,50 @@ span.better-highlight-${color.id}.better-highlight-processed,
 			}
 		});
 
+		// PDFエクスポート対応: print media用のスタイル
+		css += `
+/* PDF Export Support - Print Media Styles */
+@media print {
+	/* デフォルトハイライト（PDFでも維持） */
+	mark, .cm-highlight {
+		background-color: #ffeb3b !important;
+		color: inherit !important;
+		-webkit-print-color-adjust: exact !important;
+		print-color-adjust: exact !important;
+	}
+
+	/* カスタムハイライト（PDFでも維持） */
+	.better-highlight-processed {
+		-webkit-print-color-adjust: exact !important;
+		print-color-adjust: exact !important;
+	}
+
+`;
+
+		// 各色のprint media用CSSルールを生成
+		this.settings.colors.forEach((color) => {
+			if (color.enabled) {
+				css += `
+	/* ${color.displayName}ハイライト - PDF対応 */
+	span.better-highlight-${color.id}.better-highlight-processed,
+	.better-highlight-${color.id} {
+		background: linear-gradient(to bottom, transparent 0%, transparent 60%, ${color.color} 60%, ${color.color} 100%) !important;
+		color: inherit !important;
+		-webkit-print-color-adjust: exact !important;
+		print-color-adjust: exact !important;
+	}
+`;
+			}
+		});
+
+		css += `
+}
+`;
+
 		style.textContent = css;
 		document.head.appendChild(style);
 		
-		console.log('CSS styles added:', css);
+		console.log('CSS styles added with PDF export support:', css);
 	}
 
 	private setupMarkdownPostProcessor() {
