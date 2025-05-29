@@ -411,7 +411,7 @@ span.better-highlight-${color.id}.better-highlight-processed,
 			}
 
 			update(update: ViewUpdate) {
-				if (update.docChanged || update.viewportChanged) {
+				if (update.docChanged || update.viewportChanged || update.selectionSet) {
 					this.decorations = this.buildDecorations(update.view);
 				}
 			}
@@ -419,8 +419,9 @@ span.better-highlight-${color.id}.better-highlight-processed,
 			buildDecorations(view: EditorView): DecorationSet {
 				const builder = new RangeSetBuilder<Decoration>();
 				const text = view.state.doc.toString();
+				const cursorPos = view.state.selection.main.head;
 				
-				console.log('🔍 Building decorations for editor text');
+				console.log('🔍 Building decorations for editor text, cursor at:', cursorPos);
 				
 				// カスタムハイライト構文を検索
 				const regex = /===\(([^)]+)\)([^=]+)===/g;
@@ -429,36 +430,56 @@ span.better-highlight-${color.id}.better-highlight-processed,
 				while ((match = regex.exec(text)) !== null) {
 					const colorName = match[1];
 					const content = match[2];
+					const fullMatch = match[0];
 					const from = match.index;
-					const to = match.index + match[0].length;
+					const to = match.index + fullMatch.length;
 					
-					console.log(`Found custom syntax in editor: ${match[0]}, color: ${colorName}, content: ${content}`);
+					console.log(`Found custom syntax: ${fullMatch} at ${from}-${to}`);
+					console.log(`Cursor position: ${cursorPos}`);
 					
 					const color = plugin.settings.colors.find(c => c.name === colorName);
 					
 					if (color && color.enabled) {
-						console.log(`Creating decoration for ${colorName} at ${from}-${to}`);
+						// カーソルがハイライト範囲内にあるかチェック
+						const cursorInRange = cursorPos >= from && cursorPos <= to;
 						
-						// カスタムWidget型を作成
-						class HighlightWidget extends WidgetType {
-							constructor(private content: string, private className: string) {
-								super();
-							}
+						if (cursorInRange) {
+							// カーソルが範囲内の場合：構文全体を表示しつつハイライト効果も適用
+							console.log(`Cursor in range ${from}-${to}, showing syntax with highlight`);
 							
-							toDOM() {
-								const span = document.createElement('span');
-								span.textContent = this.content;
-								span.className = this.className;
-								return span;
-							}
+							// 構文全体にハイライト効果を適用
+							builder.add(from, to, Decoration.mark({
+								class: `better-highlight-${color.id}`,
+							}));
+						} else {
+							// カーソルが範囲外の場合：マークアップを隠してコンテンツのみ表示
+							console.log(`Cursor outside range ${from}-${to}, hiding markup`);
+							
+							// 開始マークアップの位置を計算
+							const openMarkupStart = from;
+							const openMarkupEnd = from + `===(${colorName})`.length;
+							
+							// コンテンツの位置を計算
+							const contentStart = openMarkupEnd;
+							const contentEnd = to - 3; // "===" の長さ分
+							
+							// 終了マークアップの位置を計算
+							const closeMarkupStart = contentEnd;
+							const closeMarkupEnd = to;
+							
+							// 開始マークアップを隠す
+							builder.add(openMarkupStart, openMarkupEnd, Decoration.replace({}));
+							
+							// コンテンツ部分にハイライト効果を適用
+							builder.add(contentStart, contentEnd, Decoration.mark({
+								class: `better-highlight-${color.id}`,
+							}));
+							
+							// 終了マークアップを隠す
+							builder.add(closeMarkupStart, closeMarkupEnd, Decoration.replace({}));
 						}
 						
-						// 元の構文を完全に置換
-						const replacement = Decoration.replace({
-							widget: new HighlightWidget(content, `better-highlight-${color.id} better-highlight-processed`)
-						});
-						
-						builder.add(from, to, replacement);
+						console.log(`Applied decorations for ${colorName}`);
 					}
 				}
 				
