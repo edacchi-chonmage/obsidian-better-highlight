@@ -1,7 +1,7 @@
 {
   "id": "better-highlight",
   "name": "Better Highlight",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "minAppVersion": "1.4.0",
   "description": "Enhanced Markdown highlighting for Obsidian with custom colors",
   "author": "edacchi_chonmage",

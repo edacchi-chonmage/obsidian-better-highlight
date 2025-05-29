@@ -106,7 +106,19 @@ Contributions are welcome! Please feel free to submit issues and pull requests.
 
 ## Changelog
 
-### Latest Version
+### Version 1.0.0 (Initial Release)
+- ✨ **NEW**: Custom color highlights with `==(colorname)text==` syntax
+- ✨ **NEW**: Standard `==text==` highlighting support
+- ✨ **NEW**: Configurable color palette (add, remove, customize colors)
+- ✨ **NEW**: Hotkey support for all highlight colors
+- ✨ **NEW**: Live preview in editor with real-time rendering
+- ✨ **NEW**: Full reading view support
+- ✨ **NEW**: Multi-language support (10 languages)
+- ✨ **NEW**: Intelligent highlight removal (selection and cursor-based)
+- ✨ **NEW**: Native Obsidian UI integration
+- 🔧 **BREAKING**: Uses `==` syntax for consistency with Obsidian native highlights
+
+### Latest Features
 - Auto-detection of Obsidian language
 - Support for 10 languages
 - Improved highlight removal (partial selection support)
