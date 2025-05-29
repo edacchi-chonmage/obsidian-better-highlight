@@ -403,91 +403,125 @@ span.better-highlight-${color.id}.better-highlight-processed,
 
 	private createEditorExtension(): Extension {
 		const plugin = this;
-		return ViewPlugin.fromClass(class implements PluginValue {
-			decorations: DecorationSet;
-
-			constructor(view: EditorView) {
-				this.decorations = this.buildDecorations(view);
-			}
-
-			update(update: ViewUpdate) {
-				if (update.docChanged || update.viewportChanged || update.selectionSet) {
-					this.decorations = this.buildDecorations(update.view);
+		return [
+			// マウスイベントハンドラーを追加
+			EditorView.domEventHandlers({
+				mousedown: (event, view) => {
+					// マウスドラッグ開始をマーク
+					(view as any)._betterHighlightDragging = true;
+					return false;
+				},
+				mouseup: (event, view) => {
+					// マウスドラッグ終了をマーク
+					if ((view as any)._betterHighlightDragging) {
+						(view as any)._betterHighlightDragging = false;
+						// 少し遅延を入れてデコレーションを更新
+						setTimeout(() => {
+							view.requestMeasure();
+						}, 1);
+					}
+					return false;
 				}
-			}
+			}),
+			ViewPlugin.fromClass(class implements PluginValue {
+				decorations: DecorationSet;
 
-			buildDecorations(view: EditorView): DecorationSet {
-				const builder = new RangeSetBuilder<Decoration>();
-				const text = view.state.doc.toString();
-				const cursorPos = view.state.selection.main.head;
-				
-				console.log('🔍 Building decorations for editor text, cursor at:', cursorPos);
-				
-				// カスタムハイライト構文を検索
-				const regex = /===\(([^)]+)\)([^=]+)===/g;
-				let match;
-				
-				while ((match = regex.exec(text)) !== null) {
-					const colorName = match[1];
-					const content = match[2];
-					const fullMatch = match[0];
-					const from = match.index;
-					const to = match.index + fullMatch.length;
-					
-					console.log(`Found custom syntax: ${fullMatch} at ${from}-${to}`);
-					console.log(`Cursor position: ${cursorPos}`);
-					
-					const color = plugin.settings.colors.find(c => c.name === colorName);
-					
-					if (color && color.enabled) {
-						// カーソルがハイライト範囲内にあるかチェック
-						const cursorInRange = cursorPos >= from && cursorPos <= to;
-						
-						if (cursorInRange) {
-							// カーソルが範囲内の場合：構文全体を表示しつつハイライト効果も適用
-							console.log(`Cursor in range ${from}-${to}, showing syntax with highlight`);
-							
-							// 構文全体にハイライト効果を適用
-							builder.add(from, to, Decoration.mark({
-								class: `better-highlight-${color.id}`,
-							}));
-						} else {
-							// カーソルが範囲外の場合：マークアップを隠してコンテンツのみ表示
-							console.log(`Cursor outside range ${from}-${to}, hiding markup`);
-							
-							// 開始マークアップの位置を計算
-							const openMarkupStart = from;
-							const openMarkupEnd = from + `===(${colorName})`.length;
-							
-							// コンテンツの位置を計算
-							const contentStart = openMarkupEnd;
-							const contentEnd = to - 3; // "===" の長さ分
-							
-							// 終了マークアップの位置を計算
-							const closeMarkupStart = contentEnd;
-							const closeMarkupEnd = to;
-							
-							// 開始マークアップを隠す
-							builder.add(openMarkupStart, openMarkupEnd, Decoration.replace({}));
-							
-							// コンテンツ部分にハイライト効果を適用
-							builder.add(contentStart, contentEnd, Decoration.mark({
-								class: `better-highlight-${color.id}`,
-							}));
-							
-							// 終了マークアップを隠す
-							builder.add(closeMarkupStart, closeMarkupEnd, Decoration.replace({}));
-						}
-						
-						console.log(`Applied decorations for ${colorName}`);
+				constructor(view: EditorView) {
+					this.decorations = this.buildDecorations(view);
+				}
+
+				update(update: ViewUpdate) {
+					if (update.docChanged || update.viewportChanged || update.selectionSet) {
+						this.decorations = this.buildDecorations(update.view);
 					}
 				}
-				
-				return builder.finish();
-			}
-		}, {
-			decorations: (plugin) => plugin.decorations
-		});
+
+				buildDecorations(view: EditorView): DecorationSet {
+					const builder = new RangeSetBuilder<Decoration>();
+					const text = view.state.doc.toString();
+					const selection = view.state.selection.main;
+					const cursorPos = selection.head;
+					const selectionFrom = selection.from;
+					const selectionTo = selection.to;
+					const hasSelection = selectionFrom !== selectionTo;
+					const isDragging = (view as any)._betterHighlightDragging || false;
+					
+					console.log('🔍 Building decorations for editor text');
+					console.log(`Cursor: ${cursorPos}, Selection: ${selectionFrom}-${selectionTo}, Has selection: ${hasSelection}, Dragging: ${isDragging}`);
+					
+					// カスタムハイライト構文を検索
+					const regex = /===\(([^)]+)\)([^=]+)===/g;
+					let match;
+					
+					while ((match = regex.exec(text)) !== null) {
+						const colorName = match[1];
+						const content = match[2];
+						const fullMatch = match[0];
+						const from = match.index;
+						const to = match.index + fullMatch.length;
+						
+						console.log(`Found custom syntax: ${fullMatch} at ${from}-${to}`);
+						
+						const color = plugin.settings.colors.find(c => c.name === colorName);
+						
+						if (color && color.enabled) {
+							// カーソルがハイライト範囲内にあるか、または選択範囲がハイライトと重複するかチェック
+							const cursorInRange = cursorPos >= from && cursorPos <= to;
+							
+							// ドラッグ中は選択範囲の重複判定を無効にする
+							const selectionOverlaps = hasSelection && !isDragging && !(selectionTo <= from || selectionFrom >= to);
+							
+							// ドラッグ中は構文表示を完全に無効にする
+							const shouldShowSyntax = !isDragging && (cursorInRange || selectionOverlaps);
+							
+							console.log(`Range ${from}-${to}: cursor=${cursorPos}, selection=${selectionFrom}-${selectionTo}, cursorInRange=${cursorInRange}, selectionOverlaps=${selectionOverlaps}, shouldShowSyntax=${shouldShowSyntax}, isDragging=${isDragging}`);
+							
+							if (shouldShowSyntax) {
+								// カーソルが範囲内または選択範囲が重複する場合：構文全体を表示しつつハイライト効果も適用
+								console.log(`Cursor in range or selection overlaps ${from}-${to}, showing syntax with highlight`);
+								
+								// 構文全体にハイライト効果を適用
+								builder.add(from, to, Decoration.mark({
+									class: `better-highlight-${color.id}`,
+								}));
+							} else {
+								// カーソルが範囲外かつ選択範囲が重複しない場合：マークアップを隠してコンテンツのみ表示
+								console.log(`Cursor outside range and no selection overlap ${from}-${to}, hiding markup`);
+								
+								// 開始マークアップの位置を計算
+								const openMarkupStart = from;
+								const openMarkupEnd = from + `===(${colorName})`.length;
+								
+								// コンテンツの位置を計算
+								const contentStart = openMarkupEnd;
+								const contentEnd = to - 3; // "===" の長さ分
+								
+								// 終了マークアップの位置を計算
+								const closeMarkupStart = contentEnd;
+								const closeMarkupEnd = to;
+								
+								// 開始マークアップを隠す
+								builder.add(openMarkupStart, openMarkupEnd, Decoration.replace({}));
+								
+								// コンテンツ部分にハイライト効果を適用
+								builder.add(contentStart, contentEnd, Decoration.mark({
+									class: `better-highlight-${color.id}`,
+								}));
+								
+								// 終了マークアップを隠す
+								builder.add(closeMarkupStart, closeMarkupEnd, Decoration.replace({}));
+							}
+							
+							console.log(`Applied decorations for ${colorName}`);
+						}
+					}
+					
+					return builder.finish();
+				}
+			}, {
+				decorations: (plugin) => plugin.decorations
+			})
+		];
 	}
 }
 
