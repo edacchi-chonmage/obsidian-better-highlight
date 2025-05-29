@@ -16,6 +16,9 @@ main.js
 .DS_Store
 Thumbs.db
 
+# Obsidian personal settings
+.obsidian/
+
 # Logs
 logs
 *.log
