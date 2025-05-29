@@ -809,8 +809,29 @@ class BetterHighlightSettingTab extends PluginSettingTab {
 		supportDesc.innerHTML = '<p>If you find this plugin helpful, consider supporting its development:</p>';
 		supportDesc.style.marginBottom = '16px';
 		
-		// Buy me a coffee script
-		const scriptContainer = supportSection.createDiv();
-		scriptContainer.innerHTML = '<script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="edacchi_chonmage" data-color="#FFDD00" data-emoji="" data-font="Bree" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#ffffff"></script>';
+		// Buy me a coffee button (image + link)
+		const buttonContainer = supportSection.createDiv();
+		buttonContainer.style.display = 'inline-block';
+		
+		const coffeeLink = buttonContainer.createEl('a');
+		coffeeLink.href = 'https://www.buymeacoffee.com/edacchi_chonmage';
+		coffeeLink.target = '_blank';
+		coffeeLink.style.textDecoration = 'none';
+		
+		const coffeeButton = coffeeLink.createEl('img');
+		coffeeButton.src = 'https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png';
+		coffeeButton.alt = 'Buy Me A Coffee';
+		coffeeButton.style.height = '60px';
+		coffeeButton.style.width = '217px';
+		coffeeButton.style.borderRadius = '8px';
+		coffeeButton.style.cursor = 'pointer';
+		
+		// ホバー効果
+		coffeeButton.addEventListener('mouseover', () => {
+			coffeeButton.style.opacity = '0.8';
+		});
+		coffeeButton.addEventListener('mouseout', () => {
+			coffeeButton.style.opacity = '1';
+		});
 	}
 } 
