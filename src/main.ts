@@ -1,4 +1,4 @@
-import { Plugin, PluginSettingTab, Setting, App, Editor, MarkdownView, Modifier, Notice } from 'obsidian';
+import { Plugin, PluginSettingTab, Setting, App, Editor, MarkdownView, Modifier, Notice, TFile } from 'obsidian';
 import { BetterHighlightSettings, HighlightColor, DEFAULT_SETTINGS } from './types';
 import { I18n } from './i18n';
 import { Extension } from '@codemirror/state';
@@ -13,6 +13,7 @@ import { RangeSetBuilder } from '@codemirror/state';
  * - カスタム構文: ==(colorname)content==
  * - ユーザー定義カラー
  * - 多言語対応
+ * - Dataview対応インラインフィールド生成
  */
 export default class BetterHighlightPlugin extends Plugin {
 	settings!: BetterHighlightSettings;
@@ -39,6 +40,9 @@ export default class BetterHighlightPlugin extends Plugin {
 
 		// コマンドの登録
 		this.registerCommands();
+
+		// Dataview対応：Vault APIフックの設定
+		this.setupVaultHook();
 
 		// 設定タブの追加
 		this.addSettingTab(new BetterHighlightSettingTab(this.app, this));
@@ -700,6 +704,141 @@ span.better-highlight-${color.id}.better-highlight-processed,
 		
 		return translatedName || color.displayName || color.name;
 	}
+
+	/**
+	 * Dataview対応：Vault APIフックの設定
+	 */
+	private setupVaultHook(): void {
+		// 元のVault.read関数を保存
+		const originalRead = this.app.vault.read.bind(this.app.vault);
+		// 元のVault.cachedRead関数を保存
+		const originalCachedRead = this.app.vault.cachedRead.bind(this.app.vault);
+		
+		// 共通の処理ロジック
+		const processFileForDataview = async (file: TFile, originalContent: string): Promise<string> => {
+			// マークダウンファイルでない場合は元のコンテンツをそのまま返す
+			if (file.extension !== 'md') {
+				return originalContent;
+			}
+			
+			// スタックトレースを確認
+			const stack = new Error().stack || '';
+			
+			// Dataview検出（先に行う）
+			const isDataviewCall = this.settings.forceDataviewMode || 
+								  stack.includes('DataviewApi') ||
+								  stack.includes('dataview-plugin') ||
+								  stack.includes('obsidian-dataview') ||
+								  (stack.includes('dataview') && !stack.includes('editor')) ||
+								  stack.includes('DataviewInlineApi') ||
+								  // 短いスタックトレースでもDataviewを検出
+								  (stack.split('\n').length <= 3 && !stack.includes('editor') && !stack.includes('pdf'));
+			
+			// 編集・エクスポート関連の呼び出しを除外（ただしDataviewは除外しない）
+			const isExcludedCall = !isDataviewCall && (
+								  stack.includes('editor') || 
+								  stack.includes('Editor') ||
+								  stack.includes('CodeMirror') ||
+								  stack.includes('codemirror') ||
+								  stack.includes('EditMode') ||
+								  stack.includes('MarkdownView') ||
+								  stack.includes('pdf') ||
+								  stack.includes('PDF') ||
+								  stack.includes('export') ||
+								  stack.includes('Export') ||
+								  stack.includes('print') ||
+								  stack.includes('Print') ||
+								  stack.includes('render') ||
+								  stack.includes('Render') ||
+								  stack.includes('canvas') ||
+								  stack.includes('Canvas') ||
+								  stack.includes('preview') ||
+								  stack.includes('Preview')
+							  );
+			
+			// デバッグログ
+			console.log('Better Highlight - Vault read:', file.basename, '| Dataview:', isDataviewCall, '| Excluded:', isExcludedCall);
+			
+			// 除外対象の呼び出しは変更しない
+			if (isExcludedCall) {
+				console.log('- Skipped: Excluded call detected');
+				return originalContent;
+			}
+			
+			// Dataviewからの呼び出しの場合のみインラインフィールドを追加
+			if (isDataviewCall) {
+				const processedContent = this.addInlineFieldsToContent(originalContent);
+				if (processedContent !== originalContent) {
+					console.log('- Content was modified for Dataview');
+				}
+				return processedContent;
+			}
+			
+			console.log('- No modification applied');
+			return originalContent;
+		};
+		
+		// Vault.read関数をオーバーライド
+		this.app.vault.read = async (file: TFile): Promise<string> => {
+			const originalContent = await originalRead(file);
+			return await processFileForDataview(file, originalContent);
+		};
+
+		// Vault.cachedRead関数もオーバーライド
+		this.app.vault.cachedRead = async (file: TFile): Promise<string> => {
+			const originalContent = await originalCachedRead(file);
+			return await processFileForDataview(file, originalContent);
+		};
+		
+		// プラグインアンロード時に元の関数を復元
+		this.register(() => {
+			this.app.vault.read = originalRead;
+			this.app.vault.cachedRead = originalCachedRead;
+		});
+	}
+	
+	/**
+	 * コンテンツにインラインフィールドを動的に追加
+	 */
+	private addInlineFieldsToContent(content: string): string {
+		let processedContent = content;
+		
+		// カスタムハイライト構文を検索
+		const highlightRegex = /==\(([^)]+)\)\s*([^=]+)==/g;
+		let match;
+		const replacements: Array<{
+			original: string;
+			replacement: string;
+			index: number;
+		}> = [];
+		
+		while ((match = highlightRegex.exec(content)) !== null) {
+			const color = match[1].trim();
+			const text = match[2].trim();
+			const original = match[0];
+			const replacement = `${original} [highlight-${color}:: ${text}]`;
+			
+			replacements.push({
+				original,
+				replacement,
+				index: match.index
+			});
+		}
+		
+		// デバッグログ
+		if (replacements.length > 0) {
+			console.log('Better Highlight - Adding', replacements.length, 'inline fields for Dataview');
+		}
+		
+		// 後ろから置換して位置を保持
+		replacements.reverse().forEach(rep => {
+			const start = rep.index;
+			const end = start + rep.original.length;
+			processedContent = processedContent.slice(0, start) + rep.replacement + processedContent.slice(end);
+		});
+		
+		return processedContent;
+	}
 }
 
 /**
@@ -747,6 +886,41 @@ class BetterHighlightSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 					this.display();
 				}));
+
+		// Dataview Integration section
+		containerEl.createEl('h3', { text: 'Dataview連携' });
+		
+		new Setting(containerEl)
+			.setName('動的インラインフィールド生成')
+			.setDesc('Dataviewがファイルを読み取る際に、自動的にインラインフィールドを動的生成します（ソースファイルは変更されません）')
+			.addToggle(toggle => toggle
+				.setValue(true) // 常にオン（フック機能は常に有効）
+				.setDisabled(true) // ユーザーが変更できないように無効化
+				.onChange(() => {})); // 何もしない
+
+		new Setting(containerEl)
+			.setName('強制Dataviewモード (デバッグ用)')
+			.setDesc('⚠️ 警告: このモードは編集画面でもファイルを変更します。通常は無効にしてください。')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.forceDataviewMode)
+				.onChange(async (value) => {
+					this.plugin.settings.forceDataviewMode = value;
+					await this.plugin.saveSettings();
+					if (value) {
+						new Notice('⚠️ 強制モードを有効にしました。編集画面でもファイルが変更される可能性があります。', 5000);
+					}
+				}));
+
+		// クエリ例の表示
+		const exampleEl = containerEl.createEl('div');
+		exampleEl.style.cssText = 'background: var(--background-secondary); padding: 16px; border-radius: 8px; margin: 16px 0; font-family: var(--font-monospace);';
+		exampleEl.innerHTML = `
+			<strong>Dataviewクエリ例:</strong><br>
+			<code>LIST highlight-red</code><br>
+			<code>WHERE highlight-red</code><br>
+			<code>TABLE highlight-blue AS "青ハイライト"</code><br><br>
+			<em>※ハイライト構文 ==(color)text== が自動的にDataviewフィールドとして認識されます</em>
+		`;
 
 		// Colors section header
 		if (this.plugin.settings.colors.length > 0) {

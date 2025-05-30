@@ -21,5 +21,6 @@
       "color": "#fff3a8",
       "enabled": true
     }
-  ]
+  ],
+  "forceDataviewMode": false
 }
