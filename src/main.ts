@@ -724,44 +724,18 @@ span.better-highlight-${color.id}.better-highlight-processed,
 			// スタックトレースを確認
 			const stack = new Error().stack || '';
 			
-			// Dataview検出（先に行う）
-			const isDataviewCall = this.settings.forceDataviewMode || 
-								  stack.includes('DataviewApi') ||
-								  stack.includes('dataview-plugin') ||
-								  stack.includes('obsidian-dataview') ||
-								  (stack.includes('dataview') && !stack.includes('editor')) ||
-								  stack.includes('DataviewInlineApi') ||
-								  // 短いスタックトレースでもDataviewを検出
-								  (stack.split('\n').length <= 3 && !stack.includes('editor') && !stack.includes('pdf'));
+			// より厳密なDataview検出ロジック
+			const isDataviewCall = this.isDataviewCall(stack);
 			
-			// 編集・エクスポート関連の呼び出しを除外（ただしDataviewは除外しない）
-			const isExcludedCall = !isDataviewCall && (
-								  stack.includes('editor') || 
-								  stack.includes('Editor') ||
-								  stack.includes('CodeMirror') ||
-								  stack.includes('codemirror') ||
-								  stack.includes('EditMode') ||
-								  stack.includes('MarkdownView') ||
-								  stack.includes('pdf') ||
-								  stack.includes('PDF') ||
-								  stack.includes('export') ||
-								  stack.includes('Export') ||
-								  stack.includes('print') ||
-								  stack.includes('Print') ||
-								  stack.includes('render') ||
-								  stack.includes('Render') ||
-								  stack.includes('canvas') ||
-								  stack.includes('Canvas') ||
-								  stack.includes('preview') ||
-								  stack.includes('Preview')
-							  );
+			// 編集・保存・プレビュー関連の呼び出しを厳格に除外
+			const isEditingRelatedCall = this.isEditingRelatedCall(stack);
 			
 			// デバッグログ
-			console.log('Better Highlight - Vault read:', file.basename, '| Dataview:', isDataviewCall, '| Excluded:', isExcludedCall);
+			console.log('Better Highlight - Vault read:', file.basename, '| Dataview:', isDataviewCall, '| EditingRelated:', isEditingRelatedCall);
 			
-			// 除外対象の呼び出しは変更しない
-			if (isExcludedCall) {
-				console.log('- Skipped: Excluded call detected');
+			// 編集関連の呼び出しは絶対に変更しない
+			if (isEditingRelatedCall) {
+				console.log('- Skipped: Editing-related call detected');
 				return originalContent;
 			}
 			
@@ -796,12 +770,179 @@ span.better-highlight-${color.id}.better-highlight-processed,
 			this.app.vault.cachedRead = originalCachedRead;
 		});
 	}
-	
+
+	/**
+	 * Dataviewからの呼び出しかどうかを厳密に判定
+	 */
+	private isDataviewCall(stack: string): boolean {
+		// forceDataviewModeが有効な場合でも、編集関連は絶対に除外
+		if (this.settings.forceDataviewMode && !this.isEditingRelatedCall(stack)) {
+			return true;
+		}
+		
+		// より厳密なDataview検出パターン
+		const strictDataviewPatterns = [
+			'DataviewApi',
+			'DataviewInlineApi',
+			'dataview-plugin/lib',
+			'obsidian-dataview/lib',
+			'dataview/lib',
+			'DataviewPlugin',
+			'DataArray',
+			'DataviewCalendarRenderer',
+			'DataviewListRenderer',
+			'DataviewTableRenderer',
+			// Dataviewのファイル解析専用パターン
+			'parseField',
+			'parseFrontmatter',
+			'parseInlineFields',
+			'indexFile',
+			'updateMetadata'
+		];
+		
+		const hasDataviewPattern = strictDataviewPatterns.some(pattern => stack.includes(pattern));
+		
+		// Dataviewパターンがある場合でも、編集関連は絶対に除外
+		if (hasDataviewPattern && this.isEditingRelatedCall(stack)) {
+			return false;
+		}
+		
+		// より厳密な判定：少なくとも2つのDataview関連パターンが一致する場合のみ許可
+		const matchingPatterns = strictDataviewPatterns.filter(pattern => stack.includes(pattern));
+		
+		return matchingPatterns.length >= 1 && hasDataviewPattern;
+	}
+
+	/**
+	 * 編集・保存・プレビュー関連の呼び出しかどうかを判定
+	 */
+	private isEditingRelatedCall(stack: string): boolean {
+		const editingPatterns = [
+			// エディター関連
+			'editor',
+			'Editor',
+			'CodeMirror',
+			'codemirror',
+			'EditMode',
+			'MarkdownView',
+			'SourceView',
+			'LivePreview',
+			'livePreview',
+			
+			// ファイル操作関連
+			'modify',
+			'Modify',
+			'save',
+			'Save',
+			'write',
+			'Write',
+			'create',
+			'Create',
+			'rename',
+			'Rename',
+			'delete',
+			'Delete',
+			
+			// エクスポート・印刷関連
+			'pdf',
+			'PDF',
+			'export',
+			'Export',
+			'print',
+			'Print',
+			
+			// レンダリング・プレビュー関連（Dataview以外）
+			'render',
+			'Render',
+			'canvas',
+			'Canvas',
+			'preview',
+			'Preview',
+			
+			// ファイル変更検知・保存関連
+			'vault.process',
+			'metadataCache',
+			'fileManager',
+			'FileManager',
+			
+			// タブ・UI関連
+			'WorkspaceLeaf',
+			'TabbedView',
+			'ViewHeaderIcon',
+			
+			// プラグイン読み込み・初期化関連
+			'onLayoutReady',
+			'loadPlugin',
+			'enablePlugin',
+			
+			// ファイルを開く際の関連パターン（より詳細）
+			'openFile',
+			'openLinkText',
+			'setActiveFile',
+			'loadFile',
+			'switchToFile',
+			'activeLeaf',
+			'workspace.getActiveFile',
+			'workspace.openFile',
+			'app.workspace.openFile',
+			'leaf.openFile',
+			'setViewState',
+			'setState',
+			
+			// UI更新・初期化関連
+			'refresh',
+			'Refresh',
+			'update',
+			'Update',
+			'init',
+			'Init',
+			'load',
+			'Load',
+			
+			// ファイル表示・読み込み関連（ファイル開き直しで頻出）
+			'onFileOpen',
+			'onActiveLeafChange',
+			'requestUpdateLayout',
+			'rebuildView',
+			'updateLeaf',
+			'showFile',
+			'displayFile',
+			'viewFile',
+			'reloadFile',
+			'reopenFile',
+			
+			// キャッシュ・メタデータ関連
+			'getCachedFileContents',
+			'updateCache',
+			'invalidateCache',
+			'resolveFileInfo',
+			'getFileInfo',
+			
+			// 検索・プレビュー関連
+			'search',
+			'Search',
+			'hover',
+			'Hover',
+			'tooltip',
+			'Tooltip'
+		];
+		
+		return editingPatterns.some(pattern => 
+			stack.toLowerCase().includes(pattern.toLowerCase())
+		);
+	}
+
 	/**
 	 * コンテンツにインラインフィールドを動的に追加
 	 */
 	private addInlineFieldsToContent(content: string): string {
 		let processedContent = content;
+		
+		// 既にインラインフィールドが存在するかチェック
+		if (this.hasExistingInlineFields(content)) {
+			console.log('- Skipped: Inline fields already exist in content');
+			return content;
+		}
 		
 		// カスタムハイライト構文を検索
 		const highlightRegex = /==\(([^)]+)\)\s*([^=]+)==/g;
@@ -838,6 +979,15 @@ span.better-highlight-${color.id}.better-highlight-processed,
 		});
 		
 		return processedContent;
+	}
+
+	/**
+	 * コンテンツに既にインラインフィールドが存在するかチェック
+	 */
+	private hasExistingInlineFields(content: string): boolean {
+		// highlight-color形式のインラインフィールドを検索
+		const inlineFieldRegex = /\[highlight-[^:]+::[^\]]+\]/;
+		return inlineFieldRegex.test(content);
 	}
 }
 

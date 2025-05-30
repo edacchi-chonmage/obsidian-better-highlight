@@ -2,15 +2,15 @@
   "colors": [
     {
       "id": "purple",
-      "name": "important",
-      "displayName": "重要",
+      "name": "claim",
+      "displayName": "主張",
       "color": "#ffd6d6",
       "enabled": true
     },
     {
       "id": "color-1748536029194",
-      "name": "learn",
-      "displayName": "学び",
+      "name": "fact",
+      "displayName": "事実",
       "color": "#d6d1ff",
       "enabled": true
     },
@@ -20,7 +20,15 @@
       "displayName": "疑問",
       "color": "#fff3a8",
       "enabled": true
+    },
+    {
+      "id": "color-1748596131390",
+      "name": "definition",
+      "displayName": "定義",
+      "color": "#ffd699",
+      "enabled": true
     }
   ],
-  "forceDataviewMode": false
+  "forceDataviewMode": false,
+  "autoCleanupOnStartup": false
 }
