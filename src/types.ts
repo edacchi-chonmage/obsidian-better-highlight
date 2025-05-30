@@ -14,7 +14,6 @@ export interface HighlightColor {
  */
 export interface BetterHighlightSettings {
 	colors: HighlightColor[];
-	forceDataviewMode: boolean;
 }
 
 /**
@@ -119,6 +118,5 @@ export const DEFAULT_SETTINGS: BetterHighlightSettings = {
 			color: '#9c27b0',
 			enabled: true
 		}
-	],
-	forceDataviewMode: false
+	]
 }; 
