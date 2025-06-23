@@ -3,28 +3,28 @@
     {
       "id": "purple",
       "name": "claim",
-      "displayName": "主張",
+      "displayName": "主張・結論・提案・課題指摘",
       "color": "#ffd6d6",
       "enabled": true
     },
     {
       "id": "color-1748536029194",
       "name": "fact",
-      "displayName": "事実",
+      "displayName": "データ・統計・研究結果",
       "color": "#d6d1ff",
       "enabled": true
     },
     {
       "id": "color-1748536056993",
-      "name": "question",
-      "displayName": "疑問",
+      "name": "key",
+      "displayName": "重要概念・フレームワーク・専門用語",
       "color": "#fff3a8",
       "enabled": true
     },
     {
       "id": "color-1748596131390",
-      "name": "definition",
-      "displayName": "定義",
+      "name": "action",
+      "displayName": "具体的なアクション・実践項目",
       "color": "#ffd699",
       "enabled": true
     }

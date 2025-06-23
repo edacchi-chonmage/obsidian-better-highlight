@@ -317,12 +317,6 @@ export default class BetterHighlightPlugin extends Plugin {
 		let css = `
 /* Better Highlight Plugin Styles */
 
-/* デフォルトハイライト（変更なし） */
-mark, .cm-highlight {
-	background-color: #ffeb3b;
-	color: inherit;
-}
-
 /* カスタムカラーハイライト - 標準ハイライトと同じスタイル */
 .better-highlight-processed {
 	font-style: normal !important;
@@ -398,6 +392,28 @@ span.better-highlight-${color.id}.better-highlight-processed,
 	box-shadow: none !important;
 	outline: none !important;
 }
+
+/* cm-highlightが親要素の場合の対策 */
+/* :has()を使った方法（モダンブラウザ用） */
+.cm-highlight:has(.better-highlight-${color.id}),
+.cm-highlight:has(span.better-highlight-${color.id}.better-highlight-processed) {
+	background-color: transparent !important;
+	background: transparent !important;
+}
+
+/* 直接子要素として存在する場合（フォールバック） */
+.cm-highlight > .better-highlight-${color.id},
+.cm-highlight > span.better-highlight-${color.id}.better-highlight-processed {
+	/* 親要素の背景の影響を受けないようにする */
+	position: relative;
+	z-index: 1;
+}
+
+/* 親要素全体のスタイルをリセット（より強力な方法） */
+.cm-line .cm-highlight .better-highlight-${color.id},
+.cm-line .cm-highlight span.better-highlight-${color.id}.better-highlight-processed {
+	background: linear-gradient(to bottom, transparent 0%, transparent 60%, ${color.color} 60%, ${color.color} 100%) !important;
+}
 `;
 			}
 		});
@@ -406,14 +422,6 @@ span.better-highlight-${color.id}.better-highlight-processed,
 		css += `
 /* PDF Export Support - Print Media Styles */
 @media print {
-	/* デフォルトハイライト（PDFでも維持） */
-	mark, .cm-highlight {
-		background-color: #ffeb3b !important;
-		color: inherit !important;
-		-webkit-print-color-adjust: exact !important;
-		print-color-adjust: exact !important;
-	}
-
 	/* カスタムハイライト（PDFでも維持） */
 	.better-highlight-processed {
 		-webkit-print-color-adjust: exact !important;
@@ -516,10 +524,6 @@ span.better-highlight-${color.id}.better-highlight-processed,
 					
 					// 親要素で置換
 					markElement.parentElement?.replaceChild(newSpan, markElement);
-				} else {
-					// 未知の色の場合はデフォルトスタイルを適用
-					markElement.style.cssText = `background: linear-gradient(to bottom, transparent 0%, transparent 60%, #ffeb3b 60%, #ffeb3b 100%) !important`;
-					markElement.textContent = content;
 				}
 			}
 		});
@@ -543,10 +547,8 @@ span.better-highlight-${color.id}.better-highlight-processed,
 				
 				return `<span class="better-highlight-${color.id} better-highlight-processed" style="background: linear-gradient(to bottom, transparent 0%, transparent 60%, ${color.color} 60%, ${color.color} 100%) !important${additionalStyles}">${content}</span>`;
 			} else {
-				hasChanges = true;
-				const additionalStyles = isPdfContext ? 
-					'; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important' : '';
-				return `<span style="background: linear-gradient(to bottom, transparent 0%, transparent 60%, #ffeb3b 60%, #ffeb3b 100%) !important${additionalStyles}">${content}</span>`;
+				// 未知の色の場合は元のままにする
+				return match;
 			}
 		});
 		
@@ -564,10 +566,8 @@ span.better-highlight-${color.id}.better-highlight-processed,
 				
 				return `<span class="better-highlight-${color.id} better-highlight-processed" style="background: linear-gradient(to bottom, transparent 0%, transparent 60%, ${color.color} 60%, ${color.color} 100%) !important${additionalStyles}">${content}</span>`;
 			} else {
-				hasChanges = true;
-				const additionalStyles = isPdfContext ? 
-					'; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important' : '';
-				return `<span style="background: linear-gradient(to bottom, transparent 0%, transparent 60%, #ffeb3b 60%, #ffeb3b 100%) !important${additionalStyles}">${content}</span>`;
+				// 未知の色の場合は元のままにする
+				return match;
 			}
 		});
 		

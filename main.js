@@ -873,12 +873,6 @@ var BetterHighlightPlugin = class extends import_obsidian.Plugin {
     let css = `
 /* Better Highlight Plugin Styles */
 
-/* \u30C7\u30D5\u30A9\u30EB\u30C8\u30CF\u30A4\u30E9\u30A4\u30C8\uFF08\u5909\u66F4\u306A\u3057\uFF09 */
-mark, .cm-highlight {
-	background-color: #ffeb3b;
-	color: inherit;
-}
-
 /* \u30AB\u30B9\u30BF\u30E0\u30AB\u30E9\u30FC\u30CF\u30A4\u30E9\u30A4\u30C8 - \u6A19\u6E96\u30CF\u30A4\u30E9\u30A4\u30C8\u3068\u540C\u3058\u30B9\u30BF\u30A4\u30EB */
 .better-highlight-processed {
 	font-style: normal !important;
@@ -952,20 +946,34 @@ span.better-highlight-${color.id}.better-highlight-processed,
 	box-shadow: none !important;
 	outline: none !important;
 }
+
+/* cm-highlight\u304C\u89AA\u8981\u7D20\u306E\u5834\u5408\u306E\u5BFE\u7B56 */
+/* :has()\u3092\u4F7F\u3063\u305F\u65B9\u6CD5\uFF08\u30E2\u30C0\u30F3\u30D6\u30E9\u30A6\u30B6\u7528\uFF09 */
+.cm-highlight:has(.better-highlight-${color.id}),
+.cm-highlight:has(span.better-highlight-${color.id}.better-highlight-processed) {
+	background-color: transparent !important;
+	background: transparent !important;
+}
+
+/* \u76F4\u63A5\u5B50\u8981\u7D20\u3068\u3057\u3066\u5B58\u5728\u3059\u308B\u5834\u5408\uFF08\u30D5\u30A9\u30FC\u30EB\u30D0\u30C3\u30AF\uFF09 */
+.cm-highlight > .better-highlight-${color.id},
+.cm-highlight > span.better-highlight-${color.id}.better-highlight-processed {
+	/* \u89AA\u8981\u7D20\u306E\u80CC\u666F\u306E\u5F71\u97FF\u3092\u53D7\u3051\u306A\u3044\u3088\u3046\u306B\u3059\u308B */
+	position: relative;
+	z-index: 1;
+}
+
+/* \u89AA\u8981\u7D20\u5168\u4F53\u306E\u30B9\u30BF\u30A4\u30EB\u3092\u30EA\u30BB\u30C3\u30C8\uFF08\u3088\u308A\u5F37\u529B\u306A\u65B9\u6CD5\uFF09 */
+.cm-line .cm-highlight .better-highlight-${color.id},
+.cm-line .cm-highlight span.better-highlight-${color.id}.better-highlight-processed {
+	background: linear-gradient(to bottom, transparent 0%, transparent 60%, ${color.color} 60%, ${color.color} 100%) !important;
+}
 `;
       }
     });
     css += `
 /* PDF Export Support - Print Media Styles */
 @media print {
-	/* \u30C7\u30D5\u30A9\u30EB\u30C8\u30CF\u30A4\u30E9\u30A4\u30C8\uFF08PDF\u3067\u3082\u7DAD\u6301\uFF09 */
-	mark, .cm-highlight {
-		background-color: #ffeb3b !important;
-		color: inherit !important;
-		-webkit-print-color-adjust: exact !important;
-		print-color-adjust: exact !important;
-	}
-
 	/* \u30AB\u30B9\u30BF\u30E0\u30CF\u30A4\u30E9\u30A4\u30C8\uFF08PDF\u3067\u3082\u7DAD\u6301\uFF09 */
 	.better-highlight-processed {
 		-webkit-print-color-adjust: exact !important;
@@ -1042,9 +1050,6 @@ span.better-highlight-${color.id}.better-highlight-processed,
           newSpan.style.cssText = `background: linear-gradient(to bottom, transparent 0%, transparent 60%, ${color.color} 60%, ${color.color} 100%) !important${additionalStyles}`;
           newSpan.textContent = content;
           (_a = markElement.parentElement) == null ? void 0 : _a.replaceChild(newSpan, markElement);
-        } else {
-          markElement.style.cssText = `background: linear-gradient(to bottom, transparent 0%, transparent 60%, #ffeb3b 60%, #ffeb3b 100%) !important`;
-          markElement.textContent = content;
         }
       }
     });
@@ -1058,9 +1063,7 @@ span.better-highlight-${color.id}.better-highlight-processed,
         const additionalStyles = isPdfContext ? "; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important" : "";
         return `<span class="better-highlight-${color.id} better-highlight-processed" style="background: linear-gradient(to bottom, transparent 0%, transparent 60%, ${color.color} 60%, ${color.color} 100%) !important${additionalStyles}">${content}</span>`;
       } else {
-        hasChanges = true;
-        const additionalStyles = isPdfContext ? "; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important" : "";
-        return `<span style="background: linear-gradient(to bottom, transparent 0%, transparent 60%, #ffeb3b 60%, #ffeb3b 100%) !important${additionalStyles}">${content}</span>`;
+        return match;
       }
     });
     const originalRegex = /==\(([^)]+)\)([^=]+)==/g;
@@ -1071,9 +1074,7 @@ span.better-highlight-${color.id}.better-highlight-processed,
         const additionalStyles = isPdfContext ? "; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important" : "";
         return `<span class="better-highlight-${color.id} better-highlight-processed" style="background: linear-gradient(to bottom, transparent 0%, transparent 60%, ${color.color} 60%, ${color.color} 100%) !important${additionalStyles}">${content}</span>`;
       } else {
-        hasChanges = true;
-        const additionalStyles = isPdfContext ? "; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important" : "";
-        return `<span style="background: linear-gradient(to bottom, transparent 0%, transparent 60%, #ffeb3b 60%, #ffeb3b 100%) !important${additionalStyles}">${content}</span>`;
+        return match;
       }
     });
     if (hasChanges) {
